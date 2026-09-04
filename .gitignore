@@ -1,0 +1,17 @@
+.git/
+.vs/
+.vscode/
+**/.git/
+**/bin/
+**/obj/
+**/venv/
+**/__pycache__/
+**/*.py[cod]
+installer-output/
+**/publish/
+*.user
+*.suo
+*.log
+*.db-shm
+*.db-wal
+config/db.sqlite3
