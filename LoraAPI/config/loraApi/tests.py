@@ -1,3 +1,4 @@
+import gzip
 from datetime import datetime, timezone as datetime_timezone
 from unittest.mock import patch
 
@@ -111,6 +112,28 @@ class ProductTaxRateTests(TestCase):
 		)
 		self.assertEqual(response.status_code, 400)
 		self.assertEqual(str(ProductCatalog.objects.get(product_id=402).tax_rate), '0.00')
+
+
+class BandwidthCompressionTests(TestCase):
+	def setUp(self):
+		admin = get_user_model().objects.create_superuser(username='compression-admin', password='CompressionPass4182!')
+		self.client.force_login(admin)
+		for product_id in range(500, 520):
+			ProductCatalog.objects.create(
+				branch='MAIN', product_id=product_id,
+				product_name=f'Repeatable product name {product_id}',
+				product_code=f'CODE-{product_id}', barcode=f'BARCODE-{product_id}',
+			)
+
+	def test_product_catalog_is_compressed_without_changing_its_payload(self):
+		response = self.client.get('/api/products/?branch=MAIN', HTTP_ACCEPT_ENCODING='gzip')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.headers.get('Content-Encoding'), 'gzip')
+		decompressed = gzip.decompress(response.content)
+		self.assertEqual(json.loads(decompressed)['status'], 'ok')
+		self.assertEqual(len(json.loads(decompressed)['products']), 20)
+		self.assertLess(len(response.content), len(decompressed))
 
 
 class StockTransferTests(TestCase):
