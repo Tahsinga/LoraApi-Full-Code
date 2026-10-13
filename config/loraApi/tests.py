@@ -188,7 +188,7 @@ class StockTransferTests(TestCase):
 		)
 		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=999).available_quantity, 20)
 		movement = StockMovement.objects.get(product_id=999, branch='BranchA')
-		self.assertEqual(movement.movement_type, 'adjusted')
+		self.assertEqual(movement.movement_type, 'stocktake')
 		self.assertEqual(movement.quantity, 20)
 
 	def test_main_stock_update_rejects_negative_stock_take(self):
@@ -748,6 +748,7 @@ class StockTransferTests(TestCase):
 		ProductCatalog.objects.create(
 			branch='BranchA', product_id=1004, product_name='TEST PRODUCT',
 			product_code='1005', available_quantity=300,
+			pos_movement_date=timezone.localdate(), pos_sold_quantity=400, pos_received_quantity=500,
 		)
 		StockMovement.objects.create(
 			branch='BranchA', product_id=1004, product_name='TEST PRODUCT',
@@ -775,12 +776,21 @@ class StockTransferTests(TestCase):
 		summary = self.client.get('/api/stock/summary/?branch=BranchA').json()
 
 		self.assertEqual(first_response.status_code, 200)
-		self.assertEqual(first_response.json()['movements_recorded'], 1)
+		self.assertEqual(first_response.json()['movements_recorded'], 3)
 		self.assertEqual(second_response.status_code, 200)
 		self.assertEqual(second_response.json()['movements_recorded'], 0)
 		self.assertEqual(StockMovement.objects.filter(
 			branch='BranchA', product_id=1004, source='pos_stock_snapshot',
 		).count(), 1)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1004, source='POS sales',
+		).quantity, 1011)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1004, source='POS receiving',
+		).quantity, 1200)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1004, source='pos_stock_snapshot',
+		).movement_type, 'maintained')
 		product = next(item for item in summary['products'] if item['product_id'] == 1004)
 		self.assertEqual(product['available_quantity'], '-700')
 		self.assertEqual(product['movement_balance'], '-700')

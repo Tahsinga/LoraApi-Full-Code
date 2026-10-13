@@ -679,7 +679,7 @@ def adjust_main_stock(request):
                     branch=branch,
                     product_id=product_id,
                     product_name=product_name,
-                    movement_type='adjusted',
+                    movement_type='stocktake',
                     quantity=quantity,
                     source=f'{request.user.get_username()} (stock take)',
                 )
@@ -785,13 +785,13 @@ def stock_summary(request):
     latest_adjustments = StockMovement.objects.filter(
         branch__iexact=branch,
         product_id=OuterRef('product_id'),
-        movement_type='adjusted',
+        movement_type__in=['adjusted', 'stocktake', 'maintained'],
     ).order_by('-created_at', '-id')
     latest_adjustment_by_product = {}
     for product_id, quantity in StockMovement.objects.filter(
         branch__iexact=branch,
         product_id__in=product_ids,
-        movement_type='adjusted',
+        movement_type__in=['adjusted', 'stocktake', 'maintained'],
     ).order_by('product_id', '-created_at', '-id').values_list('product_id', 'quantity'):
         latest_adjustment_by_product.setdefault(product_id, quantity)
     movement_deltas = dict(
@@ -876,9 +876,16 @@ def stock_movements(request):
             {
                 'product_id': movement.product_id,
                 'product_name': movement.product_name,
-                'movement_type': movement.movement_type,
+                'movement_type': (
+                    'maintained' if movement.movement_type == 'adjusted' and movement.source == 'pos_stock_snapshot'
+                    else 'stocktake' if movement.movement_type == 'adjusted' and '(stock take)' in movement.source.casefold()
+                    else movement.movement_type
+                ),
                 'quantity': str(movement.quantity),
-                'source': 'Sold' if movement.movement_type == 'sold' else (movement.source or 'System'),
+                'source': {
+                    'branch_sync': 'POS sales',
+                    'pos_stock_snapshot': 'POS stock sync',
+                }.get(movement.source, movement.source or 'System'),
                 'created_at': movement.created_at.isoformat(),
             }
             for movement in movements
@@ -912,7 +919,7 @@ def product_movement_history_api(request):
     running_balances = {product_id: Decimal('0') for product_id in product_ids}
     movement_rows = []
     for movement in all_movements:
-        if movement.movement_type == 'adjusted':
+        if movement.movement_type in {'adjusted', 'stocktake', 'maintained'}:
             running_balances[movement.product_id] = movement.quantity
         elif movement.movement_type == 'sold':
             running_balances[movement.product_id] -= movement.quantity
@@ -1124,6 +1131,16 @@ def publish_branch_stock_snapshot(request):
 
     updated = 0
     movements_recorded = 0
+    movement_day_start = timezone.make_aware(datetime.combine(movement_date, datetime.min.time()))
+    movement_day_end = movement_day_start + timedelta(days=1)
+    snapshot_product_ids = [snapshot['product_id'] for snapshot in snapshots]
+    pos_activity_recorded = set(StockMovement.objects.filter(
+        branch__iexact=branch,
+        product_id__in=snapshot_product_ids,
+        source__in=['POS sales', 'POS receiving'],
+        created_at__gte=movement_day_start,
+        created_at__lt=movement_day_end,
+    ).values_list('product_id', 'source'))
     with transaction.atomic():
         for snapshot in snapshots:
             product, created = ProductCatalog.objects.select_for_update().get_or_create(
@@ -1138,7 +1155,20 @@ def publish_branch_stock_snapshot(request):
                     'branch_confirmed': True,
                 },
             )
+            previous_movement_date = product.pos_movement_date
+            previous_sold_quantity = product.pos_sold_quantity
+            previous_received_quantity = product.pos_received_quantity
             quantity_changed = product.available_quantity != snapshot['available_quantity']
+            sold_delta = Decimal('0')
+            received_delta = Decimal('0')
+            if snapshot['pos_sold_quantity'] is not None:
+                sold_delta = max(snapshot['pos_sold_quantity'] - previous_sold_quantity, Decimal('0'))
+                if previous_movement_date != snapshot['pos_movement_date'] or previous_sold_quantity is None or (product.product_id, 'POS sales') not in pos_activity_recorded:
+                    sold_delta = snapshot['pos_sold_quantity']
+            if snapshot['pos_received_quantity'] is not None:
+                received_delta = max(snapshot['pos_received_quantity'] - previous_received_quantity, Decimal('0'))
+                if previous_movement_date != snapshot['pos_movement_date'] or previous_received_quantity is None or (product.product_id, 'POS receiving') not in pos_activity_recorded:
+                    received_delta = snapshot['pos_received_quantity']
             changed_fields = []
             for field in ('product_name', 'product_code', 'barcode', 'selling_price'):
                 if getattr(product, field) != snapshot[field]:
@@ -1157,12 +1187,32 @@ def publish_branch_stock_snapshot(request):
                 product.save(update_fields=[*changed_fields, 'branch_confirmed', 'updated_at'])
             if changed_fields or created:
                 updated += 1
+            if sold_delta > 0:
+                StockMovement.objects.create(
+                    branch=branch,
+                    product_id=product.product_id,
+                    product_name=product.product_name,
+                    movement_type='sold',
+                    quantity=sold_delta,
+                    source='POS sales',
+                )
+                movements_recorded += 1
+            if received_delta > 0:
+                StockMovement.objects.create(
+                    branch=branch,
+                    product_id=product.product_id,
+                    product_name=product.product_name,
+                    movement_type='received',
+                    quantity=received_delta,
+                    source='POS receiving',
+                )
+                movements_recorded += 1
             if quantity_changed:
                 StockMovement.objects.create(
                     branch=branch,
                     product_id=product.product_id,
                     product_name=product.product_name,
-                    movement_type='adjusted',
+                    movement_type='maintained',
                     quantity=snapshot['available_quantity'],
                     source='pos_stock_snapshot',
                 )

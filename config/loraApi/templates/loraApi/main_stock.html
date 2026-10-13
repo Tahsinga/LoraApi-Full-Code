@@ -121,6 +121,9 @@
     .movement-table tr:last-child td { border-bottom:0; }
     .movement-table .received { color:var(--teal-dark); font-weight:700; }
     .movement-table .sold { color:#a53b2e; font-weight:700; }
+    .movement-table .stocktake { color:#7048a8; font-weight:700; }
+    .movement-table .maintained { color:#596579; font-weight:700; }
+    .movement-table .adjusted { color:#596579; font-weight:700; }
     .transfer-table { width:100%; border-collapse:collapse; min-width:760px; }
     .transfer-table th { padding:11px 13px; color:var(--muted); border-bottom:1px solid var(--line); text-align:left; font:700 10px Arial,sans-serif; letter-spacing:.8px; text-transform:uppercase; }
     .transfer-table td { padding:13px; border-bottom:1px solid var(--line); font:14px Arial,sans-serif; }
@@ -590,7 +593,7 @@
       const movements = (data.movements || []).sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
       movementStatus.textContent = `${movements.length} movement${movements.length === 1 ? '' : 's'}`;
       stockMovements.innerHTML = movements.length
-        ? `<table class="movement-table"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Source</th><th>Date</th></tr></thead><tbody>${movements.map(movement => { const createdAt = new Date(movement.created_at); return `<tr><td>${escapeHtml(movement.product_name)}<small>ID ${escapeHtml(movement.product_id)}</small></td><td class="${escapeHtml(movement.movement_type)}">${escapeHtml(movement.movement_type)}</td><td>${escapeHtml(movement.quantity)}</td><td>${escapeHtml(movement.source)}</td><td><time datetime="${escapeHtml(movement.created_at)}">${escapeHtml(new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(createdAt))}</time></td></tr>`; }).join('')}</tbody></table>`
+        ? `<table class="movement-table"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Source</th><th>Date</th></tr></thead><tbody>${movements.map(movement => { const createdAt = new Date(movement.created_at); const labels = {received:'New stock',sold:'Sold',stocktake:'Stocktake',maintained:'Maintained',adjusted:'Adjusted'}; const movementType = String(movement.movement_type || 'adjusted').toLowerCase(); return `<tr><td>${escapeHtml(movement.product_name)}<small>ID ${escapeHtml(movement.product_id)}</small></td><td class="${escapeHtml(movementType)}">${escapeHtml(labels[movementType] || movementType)}</td><td>${escapeHtml(movement.quantity)}</td><td>${escapeHtml(movement.source)}</td><td><time datetime="${escapeHtml(movement.created_at)}">${escapeHtml(new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(createdAt))}</time></td></tr>`; }).join('')}</tbody></table>`
         : '<p class="empty">No stock movements recorded yet.</p>';
     } catch (error) {
       if (error.name === 'AbortError' || requestId !== stockMovementsRequestId) return;

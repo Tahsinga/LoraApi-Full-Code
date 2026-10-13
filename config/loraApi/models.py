@@ -103,7 +103,13 @@ class StockTransfer(models.Model):
 
 
 class StockMovement(models.Model):
-	MOVEMENT_TYPES = [('received', 'Received'), ('sold', 'Sold'), ('adjusted', 'Stock adjusted')]
+	MOVEMENT_TYPES = [
+		('received', 'New stock'),
+		('sold', 'Sold'),
+		('stocktake', 'Stocktake'),
+		('maintained', 'Maintained'),
+		('adjusted', 'Stock adjusted'),
+	]
 	branch = models.CharField(max_length=255, blank=True, default='')
 	product_id = models.IntegerField()
 	product_name = models.CharField(max_length=255, blank=True, default='')
