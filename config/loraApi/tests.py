@@ -784,10 +784,10 @@ class StockTransferTests(TestCase):
 		).count(), 1)
 		self.assertEqual(StockMovement.objects.get(
 			branch='BranchA', product_id=1004, source='POS sales',
-		).quantity, 1011)
+		).quantity, 611)
 		self.assertEqual(StockMovement.objects.get(
 			branch='BranchA', product_id=1004, source='POS receiving',
-		).quantity, 1200)
+		).quantity, 700)
 		self.assertEqual(StockMovement.objects.get(
 			branch='BranchA', product_id=1004, source='pos_stock_snapshot',
 		).movement_type, 'maintained')
@@ -796,6 +796,32 @@ class StockTransferTests(TestCase):
 		self.assertEqual(product['movement_balance'], '-700')
 		self.assertEqual(product['sold_quantity'], '1011')
 		self.assertEqual(product['received_quantity'], '1200')
+
+	def test_pos_sales_delta_does_not_create_maintained_movement(self):
+		from django.utils import timezone
+
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=1005, product_name='POS Sale Product',
+			available_quantity=500, pos_movement_date=timezone.localdate(),
+			pos_sold_quantity=300, pos_received_quantity=50,
+		)
+		payload = {'branch': 'BranchA', 'products': [{
+			'product_id': 1005, 'product_name': 'POS Sale Product',
+			'available_quantity': 400, 'sold_quantity': 400, 'received_quantity': 50,
+		}], 'movement_date': timezone.localdate().isoformat()}
+
+		response = self.client.post(
+			'/api/stock/snapshot/', data=json.dumps(payload), content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['movements_recorded'], 1)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1005, source='POS sales',
+		).quantity, 100)
+		self.assertFalse(StockMovement.objects.filter(
+			branch='BranchA', product_id=1005, movement_type='maintained',
+		).exists())
 
 	def test_stock_page_highlights_products_with_negative_movement_balance(self):
 		response = self.client.get('/stock/')

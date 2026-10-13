@@ -1131,16 +1131,6 @@ def publish_branch_stock_snapshot(request):
 
     updated = 0
     movements_recorded = 0
-    movement_day_start = timezone.make_aware(datetime.combine(movement_date, datetime.min.time()))
-    movement_day_end = movement_day_start + timedelta(days=1)
-    snapshot_product_ids = [snapshot['product_id'] for snapshot in snapshots]
-    pos_activity_recorded = set(StockMovement.objects.filter(
-        branch__iexact=branch,
-        product_id__in=snapshot_product_ids,
-        source__in=['POS sales', 'POS receiving'],
-        created_at__gte=movement_day_start,
-        created_at__lt=movement_day_end,
-    ).values_list('product_id', 'source'))
     with transaction.atomic():
         for snapshot in snapshots:
             product, created = ProductCatalog.objects.select_for_update().get_or_create(
@@ -1158,17 +1148,21 @@ def publish_branch_stock_snapshot(request):
             previous_movement_date = product.pos_movement_date
             previous_sold_quantity = product.pos_sold_quantity
             previous_received_quantity = product.pos_received_quantity
+            previous_available_quantity = product.available_quantity
             quantity_changed = product.available_quantity != snapshot['available_quantity']
             sold_delta = Decimal('0')
             received_delta = Decimal('0')
             if snapshot['pos_sold_quantity'] is not None:
                 sold_delta = max(snapshot['pos_sold_quantity'] - previous_sold_quantity, Decimal('0'))
-                if previous_movement_date != snapshot['pos_movement_date'] or previous_sold_quantity is None or (product.product_id, 'POS sales') not in pos_activity_recorded:
+                if previous_movement_date != snapshot['pos_movement_date'] or previous_sold_quantity is None:
                     sold_delta = snapshot['pos_sold_quantity']
             if snapshot['pos_received_quantity'] is not None:
                 received_delta = max(snapshot['pos_received_quantity'] - previous_received_quantity, Decimal('0'))
-                if previous_movement_date != snapshot['pos_movement_date'] or previous_received_quantity is None or (product.product_id, 'POS receiving') not in pos_activity_recorded:
+                if previous_movement_date != snapshot['pos_movement_date'] or previous_received_quantity is None:
                     received_delta = snapshot['pos_received_quantity']
+            needs_maintenance = quantity_changed and (
+                previous_available_quantity + received_delta - sold_delta != snapshot['available_quantity']
+            )
             changed_fields = []
             for field in ('product_name', 'product_code', 'barcode', 'selling_price'):
                 if getattr(product, field) != snapshot[field]:
@@ -1207,7 +1201,7 @@ def publish_branch_stock_snapshot(request):
                     source='POS receiving',
                 )
                 movements_recorded += 1
-            if quantity_changed:
+            if needs_maintenance:
                 StockMovement.objects.create(
                     branch=branch,
                     product_id=product.product_id,
