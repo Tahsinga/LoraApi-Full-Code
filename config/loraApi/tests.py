@@ -876,6 +876,28 @@ class StockTransferTests(TestCase):
 		legacy_event = next(item for item in movements if item['product_id'] == legacy_transfer.product_id)
 		self.assertEqual(legacy_event['source'], 'Stock transfer')
 
+	def test_stock_activity_shows_sold_quantity_not_pos_stock_snapshot_balance(self):
+		from django.utils import timezone
+
+		StockMovement.objects.create(
+			branch='BranchA', product_id=1009, product_name='Sold product',
+			movement_type='sold', quantity=3, source='POS sales',
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=1009, product_name='Sold product',
+			movement_type='maintained', quantity=17, source='pos_stock_snapshot',
+		)
+
+		response = self.client.get('/api/stock/movements/', {
+			'branch': 'BranchA', 'date': timezone.localdate().isoformat(),
+		})
+		movements = response.json()['movements']
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(len(movements), 1)
+		self.assertEqual(movements[0]['movement_type'], 'sold')
+		self.assertEqual(movements[0]['quantity'], '3')
+
 	def test_stock_page_highlights_products_with_negative_movement_balance(self):
 		response = self.client.get('/stock/')
 

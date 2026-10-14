@@ -869,6 +869,8 @@ def stock_movements(request):
         branch__iexact=branch,
         created_at__gte=day_start,
         created_at__lt=day_end,
+    ).exclude(
+        source='pos_stock_snapshot',
     ).order_by('-created_at', '-id')[:2000])
     movement_events = []
     for movement in movement_records:
