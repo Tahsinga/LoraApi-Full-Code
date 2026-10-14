@@ -220,6 +220,72 @@ class StockTransferTests(TestCase):
 		second_poll = self.client.get('/api/branch-sync/?branch=BranchA')
 		self.assertEqual(second_poll.json()['pending_transfers'], [])
 
+	def test_pending_transfer_queue_retries_failed_item_before_next(self):
+		first = StockTransfer.objects.create(
+			transfer_id='TRANSFER_FIRST', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=5,
+		)
+		StockTransfer.objects.create(
+			transfer_id='TRANSFER_SECOND', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=3,
+		)
+
+		first_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(first_poll.json()['pending_transfers'][0]['id'], first.transfer_id)
+		self.assertEqual(
+			self.client.get('/api/stock/transfers/pending/?branch=BranchA').json()['pending_transfers'],
+			[],
+		)
+
+		failed_response = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': first.transfer_id, 'branch': 'BranchA', 'success': False}),
+			content_type='application/json',
+		)
+		self.assertEqual(failed_response.status_code, 200)
+		retry_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(retry_poll.json()['pending_transfers'][0]['id'], first.transfer_id)
+
+		self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': first.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+		next_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(next_poll.json()['pending_transfers'][0]['id'], 'TRANSFER_SECOND')
+
+	def test_admin_can_only_delete_selected_pending_mini_market_transfers(self):
+		pending = StockTransfer.objects.create(
+			transfer_id='TRANSFER_MINI_PENDING', branch='Mini Market', product_id=999,
+			product_name='Test Product', quantity=5,
+		)
+		other_branch = StockTransfer.objects.create(
+			transfer_id='TRANSFER_OTHER_BRANCH', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=3,
+		)
+		completed = StockTransfer.objects.create(
+			transfer_id='TRANSFER_MINI_COMPLETED', branch='Mini Market', product_id=999,
+			product_name='Test Product', quantity=2, status='completed',
+		)
+		admin_url = '/admin/loraApi/stocktransfer/'
+		selected_ids = [pending.pk, other_branch.pk, completed.pk]
+		post_data = {
+			'action': 'delete_pending_mini_market_transfers',
+			'index': '0',
+			'_selected_action': selected_ids,
+		}
+
+		confirmation = self.client.post(admin_url, post_data)
+		self.assertEqual(confirmation.status_code, 200)
+		self.assertContains(confirmation, 'Are you sure')
+
+		post_data['post'] = 'yes'
+		response = self.client.post(admin_url, post_data)
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(StockTransfer.objects.filter(pk=pending.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=other_branch.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=completed.pk).exists())
+
 	def test_direct_send_adds_quantity_to_main_and_branch(self):
 		MainStockBalance.objects.filter(product_id=999).update(quantity=150)
 		response = self.client.post(

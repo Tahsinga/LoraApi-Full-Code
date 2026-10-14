@@ -2073,6 +2073,43 @@ def health_check(request):
     })
 
 
+def claim_next_stock_transfer(branch_name=''):
+    stale_before = timezone.now() - timedelta(minutes=2)
+    StockTransfer.objects.filter(
+        status='processing',
+        created_at__lt=stale_before,
+    ).update(status='pending', claimed_at=None)
+    transfer_query = StockTransfer.objects.filter(status='pending').order_by('created_at')
+    if branch_name:
+        transfer_query = transfer_query.filter(branch__iexact=branch_name)
+    with transaction.atomic():
+        transfer = transfer_query.select_for_update().first()
+        if transfer and (transfer.claimed_at is None or transfer.claimed_at < stale_before):
+            transfer.claimed_at = timezone.now()
+            transfer.save(update_fields=['claimed_at'])
+        else:
+            transfer = None
+    return transfer
+
+
+@csrf_exempt
+def pending_stock_transfers(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Use GET method'}, status=405)
+
+    branch_name = request.GET.get('branch', '').strip()
+    if not branch_name:
+        return JsonResponse({'status': 'error', 'message': 'Branch is required.'}, status=400)
+
+    transfer = claim_next_stock_transfer(branch_name)
+    transfers = [transfer] if transfer else []
+    return JsonResponse({
+        'status': 'ok',
+        'branch_filter': branch_name,
+        'pending_transfers': [transfer_payload(item) for item in transfers],
+    })
+
+
 @csrf_exempt
 def branch_sync(request):
     """
@@ -2106,24 +2143,8 @@ def branch_sync(request):
                 report.status = 'processing'
                 report.save(update_fields=['status'])
 
-        stale_before = timezone.now() - timedelta(minutes=2)
-        StockTransfer.objects.filter(
-            status='processing',
-            created_at__lt=stale_before,
-        ).update(status='pending', claimed_at=None)
-        transfer_query = StockTransfer.objects.filter(
-            status='pending',
-        ).filter(
-            Q(claimed_at__isnull=True) | Q(claimed_at__lt=stale_before),
-        ).order_by('created_at')
-        if branch_name:
-            transfer_query = transfer_query.filter(branch__iexact=branch_name)
-        with transaction.atomic():
-            transfer = transfer_query.select_for_update().first()
-            transfers = [transfer] if transfer else []
-            if transfer:
-                transfer.claimed_at = timezone.now()
-                transfer.save(update_fields=['claimed_at'])
+        transfer = claim_next_stock_transfer(branch_name)
+        transfers = [transfer] if transfer else []
 
         pending_price_updates = list(ProductCatalog.objects.filter(
             branch__iexact=branch_name,
