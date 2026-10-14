@@ -348,6 +348,25 @@ class StockTransferTests(TestCase):
 		next_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
 		self.assertEqual(next_poll.json()['pending_transfers'], [])
 
+	def test_stale_pending_transfers_are_retired_after_retry_limit(self):
+		stale = StockTransfer.objects.create(
+			transfer_id='TRANSFER_STALE', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=5,
+			retry_count=6,
+			retry_after=timezone.now() - timedelta(hours=2),
+		)
+		current = StockTransfer.objects.create(
+			transfer_id='TRANSFER_CURRENT', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=3,
+		)
+
+		response = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['pending_transfers'][0]['id'], current.transfer_id)
+		stale.refresh_from_db()
+		self.assertEqual(stale.status, 'failed')
+		self.assertIsNone(stale.retry_after)
+
 	def test_admin_can_only_delete_selected_pending_mini_market_transfers(self):
 		pending = StockTransfer.objects.create(
 			transfer_id='TRANSFER_MINI_PENDING', branch='Mini Market', product_id=999,

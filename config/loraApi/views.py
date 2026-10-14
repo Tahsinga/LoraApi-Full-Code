@@ -2009,11 +2009,18 @@ def complete_stock_transfer(request):
                 ])
     elif transfer.status != 'completed':
         transfer.retry_count += 1
-        retry_minutes = min(60, 5 * (2 ** min(transfer.retry_count - 1, 4)))
-        transfer.status = 'pending'
-        transfer.claimed_at = None
-        transfer.retry_after = timezone.now() + timedelta(minutes=retry_minutes)
-        transfer.save(update_fields=['status', 'claimed_at', 'retry_count', 'retry_after'])
+        if transfer.retry_count >= 6:
+            transfer.status = 'failed'
+            transfer.claimed_at = None
+            transfer.retry_after = None
+            transfer.completed_at = transfer.completed_at or timezone.now()
+            transfer.save(update_fields=['status', 'claimed_at', 'retry_count', 'retry_after', 'completed_at'])
+        else:
+            retry_minutes = min(60, 5 * (2 ** min(transfer.retry_count - 1, 4)))
+            transfer.status = 'pending'
+            transfer.claimed_at = None
+            transfer.retry_after = timezone.now() + timedelta(minutes=retry_minutes)
+            transfer.save(update_fields=['status', 'claimed_at', 'retry_count', 'retry_after'])
 
     return JsonResponse({'status': 'ok', 'transfer': transfer_payload(transfer)})
 
@@ -2096,8 +2103,31 @@ def health_check(request):
     })
 
 
+def cleanup_stale_pending_transfers(now=None):
+    now = now or timezone.now()
+    cutoff = now - timedelta(hours=1)
+    stale_transfers = StockTransfer.objects.filter(
+        status='pending',
+    ).filter(
+        Q(retry_count__gte=6, retry_after__lt=cutoff)
+        | Q(retry_count__gte=6, retry_after__isnull=True, created_at__lt=cutoff)
+        | Q(created_at__lt=now - timedelta(days=1), retry_after__isnull=True)
+    )
+    if not stale_transfers.exists():
+        return 0
+
+    stale_transfers.update(
+        status='failed',
+        claimed_at=None,
+        retry_after=None,
+        completed_at=timezone.now(),
+    )
+    return stale_transfers.count()
+
+
 def claim_next_stock_transfer(branch_name=''):
     now = timezone.now()
+    cleanup_stale_pending_transfers(now)
     stale_before = now - timedelta(minutes=2)
     StockTransfer.objects.filter(
         status='processing',
