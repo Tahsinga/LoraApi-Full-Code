@@ -675,14 +675,6 @@ def adjust_main_stock(request):
                 balance.product_name = product_name
                 balance.quantity = quantity
                 balance.save(update_fields=['product_name', 'quantity', 'updated_at'])
-                StockMovement.objects.create(
-                    branch=branch,
-                    product_id=product_id,
-                    product_name=product_name,
-                    movement_type='stocktake',
-                    quantity=quantity,
-                    source=f'{request.user.get_username()} (stock take)',
-                )
                 StockTransfer.objects.create(
                     transfer_id=f'STOCKTAKE_{branch}_{product_id}_{int(time.time() * 1000)}',
                     branch=branch,
@@ -1976,6 +1968,25 @@ def complete_stock_transfer(request):
                 if transfer.target_quantity is not None:
                     catalog.product_name = transfer.product_name or catalog.product_name
                     catalog.available_quantity = transfer.target_quantity
+                    movement_source = f'{transfer.created_by or "System"} (stock take)'
+                    legacy_movement_exists = StockMovement.objects.filter(
+                        branch__iexact=transfer.branch,
+                        product_id=transfer.product_id,
+                        movement_type='stocktake',
+                        quantity=transfer.target_quantity,
+                        source=movement_source,
+                        created_at__gte=transfer.created_at - timedelta(seconds=10),
+                        created_at__lte=transfer.created_at + timedelta(seconds=10),
+                    ).exists()
+                    if not legacy_movement_exists:
+                        StockMovement.objects.create(
+                            branch=transfer.branch,
+                            product_id=transfer.product_id,
+                            product_name=transfer.product_name,
+                            movement_type='stocktake',
+                            quantity=transfer.target_quantity,
+                            source=movement_source,
+                        )
                 elif not created and not transfer.branch_stock_applied:
                     catalog.available_quantity += transfer.quantity
                     catalog.product_name = transfer.product_name or catalog.product_name

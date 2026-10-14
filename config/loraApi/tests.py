@@ -181,6 +181,7 @@ class StockTransferTests(TestCase):
 		self.assertEqual(stock_take.target_quantity, 20)
 		self.assertEqual(stock_take.quantity, 20)
 		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=999).available_quantity, 7)
+		self.assertFalse(StockMovement.objects.filter(product_id=999, branch='BranchA').exists())
 		self.client.post(
 			'/api/stock/transfers/complete/',
 			data=json.dumps({'transfer_id': stock_take.transfer_id, 'branch': 'BranchA', 'success': True}),
@@ -190,6 +191,36 @@ class StockTransferTests(TestCase):
 		movement = StockMovement.objects.get(product_id=999, branch='BranchA')
 		self.assertEqual(movement.movement_type, 'stocktake')
 		self.assertEqual(movement.quantity, 20)
+		self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': stock_take.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 1)
+
+	def test_stock_take_completion_does_not_duplicate_legacy_movement(self):
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=7,
+		)
+		self.client.post(
+			'/api/stock/main/adjust/',
+			data=json.dumps({'product_id': 999, 'product_name': 'Test Product', 'quantity': 20, 'branch': 'BranchA'}),
+			content_type='application/json',
+		)
+		transfer = StockTransfer.objects.get()
+		StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product',
+			movement_type='stocktake', quantity=20, source=f'{transfer.created_by} (stock take)',
+		)
+
+		response = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 1)
 
 	def test_main_stock_update_rejects_negative_stock_take(self):
 		response = self.client.post(
