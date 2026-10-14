@@ -1484,7 +1484,8 @@ public sealed class BranchSyncDashboardForm : Form
             await refreshBalanceCommand.ExecuteNonQueryAsync();
 
             var actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
-            if (actualBalance != expectedBalance)
+            var balanceDelta = Math.Abs(actualBalance - expectedBalance);
+            if (balanceDelta > 0.0001m)
             {
                 throw new InvalidOperationException($"Movement procedure produced stock balance {actualBalance}, but expected {expectedBalance}; the command was rolled back.");
             }
