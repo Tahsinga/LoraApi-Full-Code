@@ -1212,19 +1212,19 @@ def publish_branch_stock_snapshot(request):
                 },
             )
             previous_movement_date = product.pos_movement_date
-            previous_sold_quantity = abs(product.pos_sold_quantity) if product.pos_sold_quantity is not None else None
-            previous_received_quantity = product.pos_received_quantity
+            previous_sold_quantity = abs(product.pos_sold_quantity) if product.pos_sold_quantity is not None else Decimal('0')
+            previous_received_quantity = product.pos_received_quantity if product.pos_received_quantity is not None else Decimal('0')
             previous_available_quantity = product.available_quantity
             quantity_changed = product.available_quantity != snapshot['available_quantity']
             sold_delta = Decimal('0')
             received_delta = Decimal('0')
             if snapshot['pos_sold_quantity'] is not None:
                 sold_delta = max(snapshot['pos_sold_quantity'] - previous_sold_quantity, Decimal('0'))
-                if previous_movement_date != snapshot['pos_movement_date'] or previous_sold_quantity is None:
+                if previous_movement_date != snapshot['pos_movement_date'] or product.pos_sold_quantity is None:
                     sold_delta = snapshot['pos_sold_quantity']
             if snapshot['pos_received_quantity'] is not None:
                 received_delta = max(snapshot['pos_received_quantity'] - previous_received_quantity, Decimal('0'))
-                if previous_movement_date != snapshot['pos_movement_date'] or previous_received_quantity is None:
+                if previous_movement_date != snapshot['pos_movement_date'] or product.pos_received_quantity is None:
                     received_delta = snapshot['pos_received_quantity']
             needs_maintenance = quantity_changed and (
                 previous_available_quantity + received_delta - sold_delta != snapshot['available_quantity']

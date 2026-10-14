@@ -823,6 +823,28 @@ class StockTransferTests(TestCase):
 			branch='BranchA', product_id=1005, movement_type='maintained',
 		).exists())
 
+	def test_first_pos_snapshot_handles_missing_movement_counters(self):
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=1010, product_name='First snapshot product',
+			available_quantity=10,
+		)
+		response = self.client.post(
+			'/api/stock/snapshot/',
+			data=json.dumps({'branch': 'BranchA', 'products': [{
+				'product_id': 1010, 'product_name': 'First snapshot product',
+				'available_quantity': 9, 'sold_quantity': 3, 'received_quantity': 2,
+			}]}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1010, source='POS sales',
+		).quantity, 3)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1010, source='POS receiving',
+		).quantity, 2)
+
 	def test_pos_stock_snapshot_normalizes_signed_sales_counters(self):
 		from django.utils import timezone
 
