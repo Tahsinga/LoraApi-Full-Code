@@ -1238,6 +1238,50 @@ public sealed class BranchSyncDashboardForm : Form
         return success && completionResponse.IsSuccessStatusCode;
     }
 
+    private static async Task<HashSet<string>> GetStoredProcedureParameterNamesAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        string procedureName)
+    {
+        var parameters = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        const string sql = @"
+            SELECT p.name
+            FROM sys.parameters p
+            INNER JOIN sys.objects o ON p.object_id = o.object_id
+            WHERE o.type = 'P'
+              AND o.name = @procedureName;";
+
+        using var command = new SqlCommand(sql, connection, transaction)
+        {
+            CommandTimeout = BranchSqlCommandTimeoutSeconds
+        };
+        command.Parameters.AddWithValue("@procedureName", procedureName);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var paramName = reader.GetString(0);
+            if (!string.IsNullOrWhiteSpace(paramName))
+            {
+                parameters.Add(paramName);
+            }
+        }
+
+        return parameters;
+    }
+
+    private static void AddStoredProcedureParameterIfSupported(
+        SqlCommand command,
+        HashSet<string> supportedParameters,
+        string parameterName,
+        object value)
+    {
+        if (supportedParameters.Contains(parameterName))
+        {
+            command.Parameters.AddWithValue(parameterName, value);
+        }
+    }
+
     private async Task<decimal> RecordStockMovementAsync(
         StockTransfer transfer,
         string branchName,
@@ -1372,6 +1416,7 @@ public sealed class BranchSyncDashboardForm : Form
             else if (targetQuantity < currentBalance)
             {
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Executing stock-reduction movement procedure for command {transfer.id}.");
+                var reductionProcedureParameters = await GetStoredProcedureParameterNamesAsync(connection, transaction, "InsertNewSaleStockTake");
                 using var movementCommand = new SqlCommand("InsertNewSaleStockTake", connection, transaction)
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -1389,18 +1434,19 @@ public sealed class BranchSyncDashboardForm : Form
                 movementCommand.Parameters.AddWithValue("@doneby", Environment.UserName);
                 movementCommand.Parameters.AddWithValue("@donewhen", today);
                 movementCommand.Parameters.AddWithValue("@trancode", 2);
-                movementCommand.Parameters.AddWithValue("@TranTime", time);
+                AddStoredProcedureParameterIfSupported(movementCommand, reductionProcedureParameters, "@TranTime", time);
                 movementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
                 movementCommand.Parameters.AddWithValue("@branch", branchName);
                 movementCommand.Parameters.AddWithValue("@details", commandMarker);
                 movementCommand.Parameters.AddWithValue("@stockbal", currentBalance);
-                movementCommand.Parameters.AddWithValue("@machinename", Environment.MachineName);
+                AddStoredProcedureParameterIfSupported(movementCommand, reductionProcedureParameters, "@machinename", Environment.MachineName);
                 await movementCommand.ExecuteNonQueryAsync();
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
             else
             {
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Executing stock-increase movement procedure for command {transfer.id}.");
+                var increaseProcedureParameters = await GetStoredProcedureParameterNamesAsync(connection, transaction, "InsertNewStockStockTake");
                 using var movementCommand = new SqlCommand("InsertNewStockStockTake", connection, transaction)
                 {
                     CommandType = CommandType.StoredProcedure,
@@ -1420,8 +1466,8 @@ public sealed class BranchSyncDashboardForm : Form
                 movementCommand.Parameters.AddWithValue("@branch", branchName);
                 movementCommand.Parameters.AddWithValue("@details", commandMarker);
                 movementCommand.Parameters.AddWithValue("@stockbal", currentBalance);
-                movementCommand.Parameters.AddWithValue("@machinename", Environment.MachineName);
-                movementCommand.Parameters.AddWithValue("@trantime", DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture));
+                AddStoredProcedureParameterIfSupported(movementCommand, increaseProcedureParameters, "@machinename", Environment.MachineName);
+                AddStoredProcedureParameterIfSupported(movementCommand, increaseProcedureParameters, "@trantime", DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture));
                 await movementCommand.ExecuteNonQueryAsync();
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
