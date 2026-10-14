@@ -243,6 +243,27 @@ class StockTransferTests(TestCase):
 			content_type='application/json',
 		)
 		self.assertEqual(failed_response.status_code, 200)
+		first.refresh_from_db()
+		self.assertEqual(first.retry_count, 1)
+		self.assertGreater(first.retry_after, timezone.now() + timedelta(minutes=4))
+		self.assertLess(first.retry_after, timezone.now() + timedelta(minutes=6))
+		self.assertEqual(
+			self.client.get('/api/stock/transfers/pending/?branch=BranchA').json()['pending_transfers'],
+			[],
+		)
+		StockTransfer.objects.filter(pk=first.pk).update(retry_after=timezone.now() - timedelta(seconds=1))
+		retry_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(retry_poll.json()['pending_transfers'][0]['id'], first.transfer_id)
+		self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': first.transfer_id, 'branch': 'BranchA', 'success': False}),
+			content_type='application/json',
+		)
+		first.refresh_from_db()
+		self.assertEqual(first.retry_count, 2)
+		self.assertGreater(first.retry_after, timezone.now() + timedelta(minutes=9))
+		self.assertLess(first.retry_after, timezone.now() + timedelta(minutes=11))
+		StockTransfer.objects.filter(pk=first.pk).update(retry_after=timezone.now() - timedelta(seconds=1))
 		retry_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
 		self.assertEqual(retry_poll.json()['pending_transfers'][0]['id'], first.transfer_id)
 
@@ -251,6 +272,9 @@ class StockTransferTests(TestCase):
 			data=json.dumps({'transfer_id': first.transfer_id, 'branch': 'BranchA', 'success': True}),
 			content_type='application/json',
 		)
+		first.refresh_from_db()
+		self.assertEqual(first.retry_count, 0)
+		self.assertIsNone(first.retry_after)
 		next_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
 		self.assertEqual(next_poll.json()['pending_transfers'][0]['id'], 'TRANSFER_SECOND')
 

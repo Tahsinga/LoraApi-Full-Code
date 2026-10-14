@@ -1985,12 +1985,20 @@ def complete_stock_transfer(request):
                     catalog.save(update_fields=['product_name', 'available_quantity', 'pending_stock_adjustment', 'pending_stock_quantity', 'updated_at'])
                 transfer.status = 'completed'
                 transfer.completed_at = transfer.completed_at or timezone.now()
+                transfer.retry_count = 0
+                transfer.retry_after = None
                 transfer.branch_stock_applied = True
-                transfer.save(update_fields=['status', 'completed_at', 'claimed_at', 'branch_stock_applied'])
+                transfer.save(update_fields=[
+                    'status', 'completed_at', 'claimed_at', 'retry_count',
+                    'retry_after', 'branch_stock_applied',
+                ])
     elif transfer.status != 'completed':
+        transfer.retry_count += 1
+        retry_minutes = min(60, 5 * (2 ** min(transfer.retry_count - 1, 4)))
         transfer.status = 'pending'
         transfer.claimed_at = None
-        transfer.save(update_fields=['status', 'claimed_at'])
+        transfer.retry_after = timezone.now() + timedelta(minutes=retry_minutes)
+        transfer.save(update_fields=['status', 'claimed_at', 'retry_count', 'retry_after'])
 
     return JsonResponse({'status': 'ok', 'transfer': transfer_payload(transfer)})
 
@@ -2084,7 +2092,10 @@ def claim_next_stock_transfer(branch_name=''):
         transfer_query = transfer_query.filter(branch__iexact=branch_name)
     with transaction.atomic():
         transfer = transfer_query.select_for_update().first()
-        if transfer and (transfer.claimed_at is None or transfer.claimed_at < stale_before):
+        now = timezone.now()
+        if transfer and (transfer.retry_after is None or transfer.retry_after <= now) and (
+            transfer.claimed_at is None or transfer.claimed_at < stale_before
+        ):
             transfer.claimed_at = timezone.now()
             transfer.save(update_fields=['claimed_at'])
         else:

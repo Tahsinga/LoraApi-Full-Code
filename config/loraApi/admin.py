@@ -10,7 +10,8 @@ from .models import StockTransfer
 class StockTransferAdmin(admin.ModelAdmin):
 	list_display = (
 		'transfer_id', 'branch', 'product_id', 'product_name', 'quantity',
-		'target_quantity', 'status', 'created_at', 'claimed_at', 'completed_at',
+		'target_quantity', 'status', 'retry_count', 'retry_after', 'created_at',
+		'claimed_at', 'completed_at',
 	)
 	list_filter = ('branch', 'status')
 	search_fields = ('transfer_id', 'product_name', 'product_id')

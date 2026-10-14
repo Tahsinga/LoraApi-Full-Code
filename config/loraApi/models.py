@@ -91,6 +91,8 @@ class StockTransfer(models.Model):
 	created_by = models.CharField(max_length=255, blank=True, default='')
 	created_at = models.DateTimeField(auto_now_add=True)
 	claimed_at = models.DateTimeField(null=True, blank=True)
+	retry_count = models.PositiveIntegerField(default=0)
+	retry_after = models.DateTimeField(null=True, blank=True)
 	completed_at = models.DateTimeField(null=True, blank=True)
 	branch_stock_applied = models.BooleanField(default=False)
 
