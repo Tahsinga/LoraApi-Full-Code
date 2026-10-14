@@ -399,6 +399,42 @@ class StockTransferTests(TestCase):
 		self.assertTrue(StockTransfer.objects.filter(pk=other_branch.pk).exists())
 		self.assertTrue(StockTransfer.objects.filter(pk=completed.pk).exists())
 
+	def test_admin_can_delete_selected_pending_yeukai_transfers_but_not_stocktakes(self):
+		pending_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_YEUKAI_4075_TEST', branch='YEUKAI', product_id=4075,
+			product_name='HONEYPOT MAHEU', quantity=100,
+		)
+		stocktake = StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_YEUKAI_4367_TEST', branch='YEUKAI', product_id=4367,
+			product_name='CAPTAIN GINGER', quantity=240, target_quantity=240,
+		)
+		other_branch = StockTransfer.objects.create(
+			transfer_id='TRANSFER_BRANCH_4075_TEST', branch='BranchA', product_id=4075,
+			product_name='HONEYPOT MAHEU', quantity=100,
+		)
+		completed = StockTransfer.objects.create(
+			transfer_id='TRANSFER_YEUKAI_4588_DONE', branch='YEUKAI', product_id=4588,
+			product_name='GAMBUKAMBU', quantity=60, status='completed',
+		)
+		admin_url = '/admin/loraApi/stocktransfer/'
+		post_data = {
+			'action': 'delete_pending_yeukai_transfers',
+			'index': '0',
+			'_selected_action': [pending_transfer.pk, stocktake.pk, other_branch.pk, completed.pk],
+		}
+
+		confirmation = self.client.post(admin_url, post_data)
+		self.assertEqual(confirmation.status_code, 200)
+		self.assertContains(confirmation, 'Are you sure')
+
+		post_data['post'] = 'yes'
+		response = self.client.post(admin_url, post_data)
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(StockTransfer.objects.filter(pk=pending_transfer.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=stocktake.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=other_branch.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=completed.pk).exists())
+
 	def test_direct_send_adds_quantity_to_main_and_branch(self):
 		MainStockBalance.objects.filter(product_id=999).update(quantity=150)
 		response = self.client.post(
