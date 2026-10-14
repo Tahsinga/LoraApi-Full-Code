@@ -35,7 +35,7 @@ else:
         host.strip()
         for host in os.environ.get(
             'ALLOWED_HOSTS',
-            'localhost,127.0.0.1,0.0.0.0,loraapi.onrender.com,lora-api.onrender.com,testserver',
+            'localhost,127.0.0.1,0.0.0.0,loraapi.onrender.com,lora-api.onrender.com,loraapi01.onrender.com,laxdomloraapi.onrender.com,testserver',
         ).split(',')
         if host.strip()
     ]
@@ -45,10 +45,10 @@ CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
         'CSRF_TRUSTED_ORIGINS',
-        'https://loraapi.onrender.com,https://lora-api.onrender.com',
+        'https://loraapi.onrender.com,https://lora-api.onrender.com,https://loraapi01.onrender.com,https://laxdomloraapi.onrender.com',
     ).split(',')
     if origin.strip()
-] + ['https://laxdomloraapi.onrender.com']
+]
 
 
 # Application definition

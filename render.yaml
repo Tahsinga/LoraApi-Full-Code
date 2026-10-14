@@ -26,6 +26,6 @@ services:
       - key: CSRF_COOKIE_SECURE
         value: "True"
       - key: ALLOWED_HOSTS
-        value: loraapi.onrender.com,lora-api.onrender.com,localhost,127.0.0.1
+        value: loraapi.onrender.com,lora-api.onrender.com,loraapi01.onrender.com,laxdomloraapi.onrender.com,localhost,127.0.0.1
       - key: CSRF_TRUSTED_ORIGINS
-        value: https://loraapi.onrender.com,https://lora-api.onrender.com
+        value: https://loraapi.onrender.com,https://lora-api.onrender.com,https://loraapi01.onrender.com,https://laxdomloraapi.onrender.com
