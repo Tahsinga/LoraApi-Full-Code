@@ -490,6 +490,30 @@ class StockTransferTests(TestCase):
 		self.assertEqual(second.status_code, 200)
 		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=999).available_quantity, 15)
 
+	def test_stock_summary_server_cursor_includes_completed_transfer_quantity(self):
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=10,
+		)
+		initial_summary = self.client.get('/api/stock/summary/?branch=BranchA').json()
+		self.assertIn('as_of', initial_summary)
+		transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_BRANCHA_999_CURSOR', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=5,
+		)
+
+		completion = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+		updated_summary = self.client.get(
+			f"/api/stock/summary/?branch=BranchA&since={initial_summary['as_of']}"
+		).json()
+
+		self.assertEqual(completion.status_code, 200)
+		self.assertTrue(updated_summary['changed'])
+		self.assertEqual(updated_summary['products'][0]['available_quantity'], '15')
+
 	def test_transfer_completion_merges_case_variant_catalog_rows(self):
 		ProductCatalog.objects.create(
 			branch='BranchA', product_id=1001, product_name='Test Product', available_quantity=10,
@@ -511,6 +535,55 @@ class StockTransferTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(ProductCatalog.objects.filter(branch__iexact='BranchA', product_id=1001).count(), 1)
 		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=1001).available_quantity, 15)
+
+	def test_transfer_completion_updates_movement_balance_without_snapshot_double_count(self):
+		movement_date = timezone.localdate()
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=10,
+			pos_movement_date=movement_date, pos_sold_quantity=0, pos_received_quantity=2,
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product',
+			movement_type='received', quantity=2, source='POS receiving',
+		)
+		transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_BRANCHA_999_MOVEMENT', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=5,
+		)
+
+		completion = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+		catalog = ProductCatalog.objects.get(branch='BranchA', product_id=999)
+		self.assertEqual(completion.status_code, 200)
+		self.assertEqual(catalog.available_quantity, 15)
+		self.assertEqual(catalog.pos_received_quantity, 7)
+		self.assertEqual(
+			StockMovement.objects.filter(branch='BranchA', product_id=999, movement_type='received').count(),
+			2,
+		)
+
+		snapshot = self.client.post(
+			'/api/stock/snapshot/',
+			data=json.dumps({
+				'branch': 'BranchA',
+				'movement_date': movement_date.isoformat(),
+				'products': [{
+					'product_id': 999, 'product_name': 'Test Product', 'available_quantity': 15,
+					'sold_quantity': 0, 'received_quantity': 7,
+				}],
+			}),
+			content_type='application/json',
+		)
+		self.assertEqual(snapshot.status_code, 200)
+		self.assertEqual(
+			StockMovement.objects.filter(branch='BranchA', product_id=999, movement_type='received').count(),
+			2,
+		)
+		stock_summary = self.client.get('/api/stock/summary/?branch=BranchA').json()
+		self.assertEqual(stock_summary['products'][0]['movement_balance'], '7')
 
 	def test_branch_price_is_queued_for_all_confirmed_branches(self):
 		ProductCatalog.objects.create(
@@ -835,6 +908,26 @@ class StockTransferTests(TestCase):
 
 		self.assertEqual(response.status_code, 409)
 		self.assertIn('already queued', response.json()['message'])
+
+	def test_branch_sync_clears_pending_flags_for_all_branches_when_no_branch_filter_is_used(self):
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=6001, product_name='Pending BranchA Product',
+			product_code='6001', pending_product_creation=True, pending_stock_quantity=5,
+			branch_confirmed=False,
+		)
+		ProductCatalog.objects.create(
+			branch='BranchB', product_id=6002, product_name='Pending BranchB Product',
+			product_code='6002', selling_price='10.00', pending_price_update=True,
+			pending_selling_price='12.50', branch_confirmed=True,
+		)
+
+		response = self.client.get('/api/branch-sync/')
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['pending_price_updates'], [])
+		self.assertEqual(response.json()['pending_product_creations'], [])
+		self.assertFalse(ProductCatalog.objects.filter(pending_product_creation=True).exists())
+		self.assertFalse(ProductCatalog.objects.filter(pending_price_update=True).exists())
 
 	def test_web_can_queue_and_branch_can_claim_invoice_reprint(self):
 		response = self.client.post(

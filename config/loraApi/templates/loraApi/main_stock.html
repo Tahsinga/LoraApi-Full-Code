@@ -449,7 +449,6 @@
     }
     if (showLoading) productCatalogStatus.textContent = 'Loading products...';
     try {
-      const startedAt = new Date().toISOString();
       const params = new URLSearchParams({ branch });
       if (branchCatalogSince && branchCatalogSinceBranch === branch) params.set('since', branchCatalogSince);
       const response = await fetch(`/api/stock/summary/?${params}`, { cache: 'no-store', signal: AbortSignal.timeout(30000) });
@@ -465,7 +464,7 @@
         products.forEach(product => productsById.set(String(product.product_id), product));
         branchCatalogProducts = [...productsById.values()];
       }
-      branchCatalogSince = startedAt;
+      branchCatalogSince = data.as_of || branchCatalogSince;
       branchCatalogSinceBranch = branch;
       if (!fullSnapshot && !data.changed) {
         productCatalogStatus.textContent = `${branchCatalogProducts.length} products up to date for ${branch}.`;

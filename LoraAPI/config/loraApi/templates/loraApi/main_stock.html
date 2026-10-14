@@ -446,7 +446,6 @@
     }
     if (showLoading) productCatalogStatus.textContent = 'Loading products...';
     try {
-      const startedAt = new Date().toISOString();
       const params = new URLSearchParams({ branch });
       if (branchCatalogSince && branchCatalogSinceBranch === branch) params.set('since', branchCatalogSince);
       const [catalogResponse, summaryResponse] = await Promise.all([
@@ -477,7 +476,7 @@
         };
       });
       if (summaryData) {
-        branchCatalogSince = startedAt;
+        branchCatalogSince = summaryData.as_of || branchCatalogSince;
         branchCatalogSinceBranch = branch;
       }
       document.querySelector('#main-stock-products').innerHTML = productOptions(branchCatalogProducts);

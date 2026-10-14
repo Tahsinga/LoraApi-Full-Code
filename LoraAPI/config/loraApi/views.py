@@ -713,6 +713,7 @@ def stock_summary(request):
         since = timezone.make_aware(since, timezone.get_current_timezone())
     today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow_start = today_start + timedelta(days=1)
+    snapshot_time = timezone.now()
     full_snapshot = since is None or timezone.localtime(since).date() != today_start.date()
 
     if full_snapshot:
@@ -754,6 +755,7 @@ def stock_summary(request):
                 'branch': branch,
                 'changed': False,
                 'full': False,
+                'as_of': snapshot_time.isoformat(),
                 'products': [],
                 'removed_product_ids': [],
             })
@@ -833,6 +835,7 @@ def stock_summary(request):
         'branch': branch,
         'changed': True,
         'full': full_snapshot,
+        'as_of': snapshot_time.isoformat(),
         'products': summary,
         'removed_product_ids': removed_product_ids,
     })
@@ -1811,7 +1814,17 @@ def complete_stock_transfer(request):
                 elif created:
                     catalog.product_name = transfer.product_name or catalog.product_name
                     catalog.available_quantity = transfer.quantity
-                if is_stock_take or created or not transfer.branch_stock_applied:
+                applied_stock = created or not transfer.branch_stock_applied
+                if not is_stock_take and applied_stock:
+                    StockMovement.objects.create(
+                        branch=transfer.branch,
+                        product_id=transfer.product_id,
+                        product_name=transfer.product_name,
+                        movement_type='received',
+                        quantity=transfer.quantity,
+                        source='Web stock transfer',
+                    )
+                if is_stock_take or applied_stock:
                     catalog.pending_stock_adjustment = True
                     catalog.pending_stock_quantity = catalog.available_quantity
                     catalog.save(update_fields=['product_name', 'available_quantity', 'pending_stock_adjustment', 'pending_stock_quantity', 'updated_at'])
@@ -1918,6 +1931,33 @@ def branch_sync(request):
     if request.method == 'GET':
         branch_name = request.GET.get('branch', '').strip()
         queue_due_sales_reports(branch_name)
+
+        if not branch_name:
+            ProductCatalog.objects.filter(
+                Q(pending_price_update=True)
+                | Q(pending_product_creation=True)
+                | Q(pending_stock_adjustment=True)
+            ).update(
+                pending_price_update=False,
+                pending_selling_price=None,
+                pending_product_creation=False,
+                pending_stock_quantity=0,
+                pending_stock_adjustment=False,
+                updated_at=timezone.now(),
+            )
+            pending_price_updates = []
+            pending_product_creations = []
+        else:
+            pending_price_updates = list(ProductCatalog.objects.filter(
+                branch__iexact=branch_name,
+                pending_price_update=True,
+                pending_selling_price__isnull=False,
+            ).values('branch', 'product_id', 'product_name', 'pending_selling_price'))
+            pending_product_creations = list(ProductCatalog.objects.filter(
+                branch__iexact=branch_name,
+                pending_product_creation=True,
+            ).values('branch', 'product_id', 'product_name', 'product_code', 'barcode', 'pending_stock_quantity', 'selling_price'))
+
         pending_query = DeletionRecord.objects.filter(status='pending')
         if branch_name:
             pending_query = pending_query.filter(branch__iexact=branch_name)
@@ -1956,15 +1996,6 @@ def branch_sync(request):
                 transfer.claimed_at = timezone.now()
                 transfer.save(update_fields=['claimed_at'])
 
-        pending_price_updates = list(ProductCatalog.objects.filter(
-            branch__iexact=branch_name,
-            pending_price_update=True,
-            pending_selling_price__isnull=False,
-        ).values('branch', 'product_id', 'product_name', 'pending_selling_price'))
-        pending_product_creations = list(ProductCatalog.objects.filter(
-            branch__iexact=branch_name,
-            pending_product_creation=True,
-        ).values('branch', 'product_id', 'product_name', 'product_code', 'barcode', 'pending_stock_quantity', 'selling_price'))
         pending_product_deletions = list(ProductDeletionRequest.objects.filter(
             branch__iexact=branch_name,
             status='pending',
