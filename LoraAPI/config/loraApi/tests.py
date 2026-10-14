@@ -421,6 +421,34 @@ class StockTransferTests(TestCase):
 		self.assertTrue(catalog.pending_stock_adjustment)
 		self.assertEqual(catalog.pending_stock_quantity, 15)
 
+	def test_transfer_is_counted_once_in_web_movement_balance(self):
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=10,
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product',
+			movement_type='received', quantity=10, source='opening stock',
+		)
+		response = self.client.post(
+			'/api/stock/transfers/',
+			data=json.dumps({'branch': 'BranchA', 'product_id': 999, 'product_name': 'Test Product', 'quantity': 10}),
+			content_type='application/json',
+		)
+		transfer = StockTransfer.objects.get()
+
+		self.assertEqual(response.status_code, 202)
+		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 1)
+		self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+
+		product = self.client.get('/api/stock/summary/?branch=BranchA').json()['products'][0]
+		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=999).available_quantity, 20)
+		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 2)
+		self.assertEqual(product['movement_balance'], '20')
+
 	def test_stock_take_updates_main_and_branch_together(self):
 		ProductCatalog.objects.create(
 			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=4,

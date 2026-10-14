@@ -1307,14 +1307,6 @@ def create_stock_transfer(request):
                 balance.product_name = product_name
                 balance.quantity += quantity
                 balance.save(update_fields=['product_name', 'quantity', 'updated_at'])
-                StockMovement.objects.create(
-                    branch=branch,
-                    product_id=product_id,
-                    product_name=product_name,
-                    movement_type='received',
-                    quantity=quantity,
-                    source=f'{request.user.get_username()} (transfer to {branch})',
-                )
                 transfer = StockTransfer.objects.create(
                     transfer_id=f'TRANSFER_{branch}_{product_id}_{int(time.time() * 1000)}',
                     branch=branch,
