@@ -1472,28 +1472,21 @@ public sealed class BranchSyncDashboardForm : Form
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
 
-            if (!isStockTake)
+            using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
             {
-                using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandTimeout = BranchSqlCommandTimeoutSeconds
-                };
-                refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-                refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
-                refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
-                refreshBalanceCommand.Parameters.AddWithValue("@productid", transfer.product_id);
-                await refreshBalanceCommand.ExecuteNonQueryAsync();
-            }
+                CommandType = CommandType.StoredProcedure,
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            };
+            refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+            refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
+            refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
+            refreshBalanceCommand.Parameters.AddWithValue("@productid", transfer.product_id);
+            await refreshBalanceCommand.ExecuteNonQueryAsync();
 
-            var actualBalance = expectedBalance;
-            if (!isStockTake)
+            var actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
+            if (actualBalance != expectedBalance)
             {
-                actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
-                if (actualBalance != expectedBalance)
-                {
-                    throw new InvalidOperationException($"Movement procedure produced stock balance {actualBalance}, but expected {expectedBalance}; the command was rolled back.");
-                }
+                throw new InvalidOperationException($"Movement procedure produced stock balance {actualBalance}, but expected {expectedBalance}; the command was rolled back.");
             }
 
             if (!isStockTake)
