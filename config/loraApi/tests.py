@@ -84,6 +84,7 @@ class ProductDeletionTests(TestCase):
 		self.assertContains(response, 'Your account password')
 		self.assertContains(response, 'Save tax')
 		self.assertContains(response, '/products/deleted/')
+		self.assertContains(response, 'offline or reconnecting; no transfer was sent.')
 
 
 class ProductTaxRateTests(TestCase):

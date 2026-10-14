@@ -345,6 +345,7 @@
   const transferQueue = [];
   let transferQueueProcessing = false;
   let activeTransfer = null;
+  let onlineBranchNames = new Set();
   const mainStockQueue = [];
   let mainStockQueueProcessing = false;
   let activeMainStockTake = null;
@@ -655,6 +656,7 @@
       const currentBranch = selectedBranch.value || localStorage.getItem(selectedBranchKey) || '';
       const branches = data.branches || [];
       const availableBranches = branches.filter(branch => branch.online === true);
+      onlineBranchNames = new Set(availableBranches.map(branch => String(branch.name).trim().toLowerCase()));
       const currentBranchOption = currentBranch && !availableBranches.some(branch => branch.name === currentBranch)
         ? `<option value="${escapeHtml(currentBranch)}">${escapeHtml(currentBranch)} (reconnecting...)</option>`
         : '';
@@ -670,6 +672,7 @@
       if (selectedBranch.value && selectedBranch.value !== previousBranch) selectedBranch.dispatchEvent(new Event('change'));
     } catch (error) {
       if (error.name === 'AbortError' || requestId !== branchRefreshRequestId) return;
+      onlineBranchNames.clear();
       if (!selectedBranch.options.length) selectedBranch.innerHTML = '<option value="">Branches unavailable</option>';
       if (!activityBranch.options.length) activityBranch.innerHTML = '<option value="">Branches unavailable</option>';
     } finally {
@@ -843,6 +846,7 @@
         transferName.value = typedProduct.product_name;
       }
       if (!selectedBranch.value) throw new Error('Select a connected branch first.');
+      if (!onlineBranchNames.has(selectedBranch.value.trim().toLowerCase())) throw new Error(`${selectedBranch.value} is offline or reconnecting; no transfer was sent. Select an online branch and try again.`);
       if (!transferProduct.value || !transferName.value) throw new Error('Select a product from the selected branch product list first.');
       if (!Number.isFinite(Number(transferQuantity)) || Number(transferQuantity) <= 0) throw new Error('Enter a positive transfer quantity.');
       transferQueue.push({ product_id: transferProduct.value, product_name: transferName.value, quantity: transferQuantity, branch: selectedBranch.value });
