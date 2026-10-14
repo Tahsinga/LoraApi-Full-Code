@@ -16,7 +16,11 @@ class StockTransferAdmin(admin.ModelAdmin):
 	)
 	list_filter = ('branch', 'status')
 	search_fields = ('transfer_id', 'product_name', 'product_id')
-	actions = ('delete_pending_mini_market_transfers', 'delete_pending_yeukai_transfers')
+	actions = (
+		'delete_pending_mini_market_transfers',
+		'delete_pending_yeukai_transfers',
+		'delete_pending_yeukai_stocktakes',
+	)
 
 	def has_add_permission(self, request):
 		return False
@@ -60,12 +64,35 @@ class StockTransferAdmin(admin.ModelAdmin):
 
 		return delete_selected(self, request, eligible)
 
+	@admin.action(
+		description='Delete selected pending YEUKAI stocktakes',
+		permissions=['delete'],
+	)
+	def delete_pending_yeukai_stocktakes(self, request, queryset):
+		if not request.user.is_superuser:
+			self.message_user(request, 'Only a superuser can remove transfer records.', messages.ERROR)
+			return None
+
+		eligible = queryset.filter(
+			branch__iexact='YEUKAI',
+			status='pending',
+			transfer_id__startswith='STOCKTAKE_',
+		)
+		if not eligible.exists():
+			self.message_user(request, 'No pending YEUKAI stocktakes were selected.', messages.WARNING)
+			return None
+
+		return delete_selected(self, request, eligible)
+
 	def delete_queryset(self, request, queryset):
 		if not request.user.is_superuser:
 			raise PermissionDenied
 		eligible = queryset.filter(status='pending').filter(
 			Q(branch__iexact='Mini Market')
-			| Q(branch__iexact='YEUKAI', transfer_id__startswith='TRANSFER_')
+			| Q(branch__iexact='YEUKAI') & (
+				Q(transfer_id__startswith='TRANSFER_')
+				| Q(transfer_id__startswith='STOCKTAKE_')
+			)
 		)
 		super().delete_queryset(request, eligible)
 
@@ -74,7 +101,7 @@ class StockTransferAdmin(admin.ModelAdmin):
 		is_pending_yeukai_transfer = (
 			obj.branch.casefold() == 'yeukai'
 			and obj.status == 'pending'
-			and obj.transfer_id.startswith('TRANSFER_')
+			and obj.transfer_id.startswith(('TRANSFER_', 'STOCKTAKE_'))
 		)
 		if not request.user.is_superuser or not (is_pending_mini_market or is_pending_yeukai_transfer):
 			raise PermissionDenied
