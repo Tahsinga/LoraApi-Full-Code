@@ -252,7 +252,7 @@ class StockTransferTests(TestCase):
 		second_poll = self.client.get('/api/branch-sync/?branch=BranchA')
 		self.assertEqual(second_poll.json()['pending_transfers'], [])
 
-	def test_pending_transfer_queue_retries_failed_item_before_next(self):
+	def test_pending_transfer_queue_skips_failed_item_during_retry_backoff(self):
 		first = StockTransfer.objects.create(
 			transfer_id='TRANSFER_FIRST', branch='BranchA', product_id=999,
 			product_name='Test Product', quantity=5,
@@ -279,9 +279,12 @@ class StockTransferTests(TestCase):
 		self.assertEqual(first.retry_count, 1)
 		self.assertGreater(first.retry_after, timezone.now() + timedelta(minutes=4))
 		self.assertLess(first.retry_after, timezone.now() + timedelta(minutes=6))
-		self.assertEqual(
-			self.client.get('/api/stock/transfers/pending/?branch=BranchA').json()['pending_transfers'],
-			[],
+		next_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
+		self.assertEqual(next_poll.json()['pending_transfers'][0]['id'], 'TRANSFER_SECOND')
+		self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': 'TRANSFER_SECOND', 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
 		)
 		StockTransfer.objects.filter(pk=first.pk).update(retry_after=timezone.now() - timedelta(seconds=1))
 		retry_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
@@ -308,7 +311,7 @@ class StockTransferTests(TestCase):
 		self.assertEqual(first.retry_count, 0)
 		self.assertIsNone(first.retry_after)
 		next_poll = self.client.get('/api/stock/transfers/pending/?branch=BranchA')
-		self.assertEqual(next_poll.json()['pending_transfers'][0]['id'], 'TRANSFER_SECOND')
+		self.assertEqual(next_poll.json()['pending_transfers'], [])
 
 	def test_admin_can_only_delete_selected_pending_mini_market_transfers(self):
 		pending = StockTransfer.objects.create(

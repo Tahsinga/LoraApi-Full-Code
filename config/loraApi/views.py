@@ -2093,21 +2093,21 @@ def health_check(request):
 
 
 def claim_next_stock_transfer(branch_name=''):
-    stale_before = timezone.now() - timedelta(minutes=2)
+    now = timezone.now()
+    stale_before = now - timedelta(minutes=2)
     StockTransfer.objects.filter(
         status='processing',
         created_at__lt=stale_before,
     ).update(status='pending', claimed_at=None)
-    transfer_query = StockTransfer.objects.filter(status='pending').order_by('created_at')
+    transfer_query = StockTransfer.objects.filter(status='pending').filter(
+        Q(retry_after__isnull=True) | Q(retry_after__lte=now),
+    ).order_by('created_at')
     if branch_name:
         transfer_query = transfer_query.filter(branch__iexact=branch_name)
     with transaction.atomic():
         transfer = transfer_query.select_for_update().first()
-        now = timezone.now()
-        if transfer and (transfer.retry_after is None or transfer.retry_after <= now) and (
-            transfer.claimed_at is None or transfer.claimed_at < stale_before
-        ):
-            transfer.claimed_at = timezone.now()
+        if transfer and (transfer.claimed_at is None or transfer.claimed_at < stale_before):
+            transfer.claimed_at = now
             transfer.save(update_fields=['claimed_at'])
         else:
             transfer = None
