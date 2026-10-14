@@ -881,7 +881,11 @@ class StockTransferTests(TestCase):
 
 		StockMovement.objects.create(
 			branch='BranchA', product_id=1009, product_name='Sold product',
-			movement_type='sold', quantity=3, source='POS sales',
+			movement_type='maintained', quantity=20, source='pos_stock_snapshot',
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=1009, product_name='Sold product',
+			movement_type='sold', quantity=2, source='POS sales',
 		)
 		StockMovement.objects.create(
 			branch='BranchA', product_id=1009, product_name='Sold product',
@@ -894,9 +898,10 @@ class StockTransferTests(TestCase):
 		movements = response.json()['movements']
 
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual(len(movements), 1)
-		self.assertEqual(movements[0]['movement_type'], 'sold')
-		self.assertEqual(movements[0]['quantity'], '3')
+		inferred_sale = next(item for item in movements if item['source'] == 'POS stock sync')
+		self.assertEqual(len(movements), 2)
+		self.assertEqual(inferred_sale['movement_type'], 'sold')
+		self.assertEqual(inferred_sale['quantity'], '1')
 
 	def test_stock_page_highlights_products_with_negative_movement_balance(self):
 		response = self.client.get('/stock/')

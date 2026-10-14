@@ -869,11 +869,11 @@ def stock_movements(request):
         branch__iexact=branch,
         created_at__gte=day_start,
         created_at__lt=day_end,
-    ).exclude(
-        source='pos_stock_snapshot',
     ).order_by('-created_at', '-id')[:2000])
     movement_events = []
     for movement in movement_records:
+        if movement.source.casefold() == 'pos_stock_snapshot':
+            continue
         movement_events.append((movement.created_at, movement.id, {
             'product_id': movement.product_id,
             'product_name': movement.product_name,
@@ -889,6 +889,36 @@ def stock_movements(request):
             }.get(movement.source, movement.source or 'System'),
             'created_at': movement.created_at.isoformat(),
         }))
+
+    movements_by_product = {}
+    for movement in movement_records:
+        movements_by_product.setdefault(movement.product_id, []).append(movement)
+    for product_movements in movements_by_product.values():
+        product_movements.sort(key=lambda movement: (movement.created_at, movement.id))
+        previous_snapshot = None
+        expected_quantity = None
+        for movement in product_movements:
+            if movement.source.casefold() == 'pos_stock_snapshot':
+                if previous_snapshot is not None:
+                    quantity_delta = expected_quantity - movement.quantity
+                    if quantity_delta != 0:
+                        movement_events.append((movement.created_at, movement.id, {
+                            'product_id': movement.product_id,
+                            'product_name': movement.product_name,
+                            'movement_type': 'sold' if quantity_delta > 0 else 'adjusted',
+                            'quantity': str(abs(quantity_delta)),
+                            'source': 'POS stock sync',
+                            'created_at': movement.created_at.isoformat(),
+                        }))
+                previous_snapshot = movement
+                expected_quantity = movement.quantity
+            elif previous_snapshot is not None:
+                if movement.movement_type in {'adjusted', 'stocktake', 'maintained'}:
+                    expected_quantity = movement.quantity
+                elif movement.movement_type == 'received':
+                    expected_quantity += movement.quantity
+                elif movement.movement_type == 'sold':
+                    expected_quantity -= movement.quantity
 
     matched_movement_ids = set()
     transfers = StockTransfer.objects.filter(
