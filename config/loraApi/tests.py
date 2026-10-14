@@ -229,6 +229,35 @@ class StockTransferTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 1)
 
+	def test_stock_receipt_adds_new_stock_but_stock_take_overrides_branch_quantity(self):
+		ProductCatalog.objects.create(branch='BranchA', product_id=1000, product_name='Batch Product', available_quantity=7)
+		normal_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_ADD_1000', branch='BranchA', product_id=1000,
+			product_name='Batch Product', quantity=5,
+		)
+
+		response = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': normal_transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=1000).available_quantity, 12)
+
+		stock_take_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_TAKE_1000', branch='BranchA', product_id=1000,
+			product_name='Batch Product', quantity=20, target_quantity=20,
+		)
+		response = self.client.post(
+			'/api/stock/transfers/complete/',
+			data=json.dumps({'transfer_id': stock_take_transfer.transfer_id, 'branch': 'BranchA', 'success': True}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(ProductCatalog.objects.get(branch='BranchA', product_id=1000).available_quantity, 20)
+
 	def test_main_stock_update_rejects_negative_stock_take(self):
 		response = self.client.post(
 			'/api/stock/main/adjust/',

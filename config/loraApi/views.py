@@ -1965,7 +1965,8 @@ def complete_stock_transfer(request):
                         'available_quantity': transfer.quantity,
                     },
                 )
-                if transfer.target_quantity is not None:
+                is_stock_take = transfer.target_quantity is not None
+                if is_stock_take:
                     catalog.product_name = transfer.product_name or catalog.product_name
                     catalog.available_quantity = transfer.target_quantity
                     movement_source = f'{transfer.created_by or "System"} (stock take)'
@@ -1988,9 +1989,12 @@ def complete_stock_transfer(request):
                             source=movement_source,
                         )
                 elif not created and not transfer.branch_stock_applied:
-                    catalog.available_quantity += transfer.quantity
                     catalog.product_name = transfer.product_name or catalog.product_name
-                if transfer.target_quantity is not None or created or not transfer.branch_stock_applied:
+                    catalog.available_quantity += transfer.quantity
+                elif created:
+                    catalog.product_name = transfer.product_name or catalog.product_name
+                    catalog.available_quantity = transfer.quantity
+                if is_stock_take or created or not transfer.branch_stock_applied:
                     catalog.pending_stock_adjustment = True
                     catalog.pending_stock_quantity = catalog.available_quantity
                     catalog.save(update_fields=['product_name', 'available_quantity', 'pending_stock_adjustment', 'pending_stock_quantity', 'updated_at'])
