@@ -1728,12 +1728,19 @@ def product_catalog(request):
             ).values('product_id'),
         )
     if query:
-        products = products.filter(
-            Q(product_name__icontains=query)
-            | Q(product_code__icontains=query)
-            | Q(barcode__icontains=query)
-            | Q(product_id__icontains=query)
-        )[:30]
+        query_value = query.strip()
+        product_filters = (
+            Q(product_name__icontains=query_value)
+            | Q(product_code__icontains=query_value)
+            | Q(barcode__icontains=query_value)
+        )
+        try:
+            product_id_filter = int(query_value)
+        except ValueError:
+            product_id_filter = None
+        if product_id_filter is not None:
+            product_filters |= Q(product_id=product_id_filter)
+        products = products.filter(product_filters)[:30]
     else:
         products = products[:3000]
     product_rows = [product_payload(product) for product in products]
