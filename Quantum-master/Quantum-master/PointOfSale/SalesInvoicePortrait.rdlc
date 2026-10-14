@@ -1,0 +1,4060 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <Body>
+    <ReportItems>
+      <Textbox Name="Textbox2">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=iif(Parameters!isfiscal.Value=1,"FISCAL TAX INVOICE",Parameters!invheader.Value.ToString)</Value>
+                <Style>
+                  <FontSize>14pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox2</rd:DefaultName>
+        <Top>0.03528cm</Top>
+        <Left>7.63099cm</Left>
+        <Height>0.78521cm</Height>
+        <Width>5.72896cm</Width>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox7">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Customer:</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox7</rd:DefaultName>
+        <Top>1.09389cm</Top>
+        <Left>0.36631cm</Left>
+        <Height>0.6cm</Height>
+        <Width>2.5cm</Width>
+        <ZIndex>1</ZIndex>
+        <Style>
+          <Border>
+            <Style>Solid</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox8">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!Ref.Value, "InvoiceDetails").ToString</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox8</rd:DefaultName>
+        <Top>1.09389cm</Top>
+        <Left>2.93687cm</Left>
+        <Height>0.6cm</Height>
+        <Width>7.06028cm</Width>
+        <ZIndex>2</ZIndex>
+        <Style>
+          <Border>
+            <Style>Solid</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Tablix Name="Tablix1">
+        <TablixBody>
+          <TablixColumns>
+            <TablixColumn>
+              <Width>2.33786cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>5.23136cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>1.1106cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>2.43614cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>1.35668cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>2.96073cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>3.41969cm</Width>
+            </TablixColumn>
+          </TablixColumns>
+          <TablixRows>
+            <TablixRow>
+              <Height>1.07625cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox26">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Product Code</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox26</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox12">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Description</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox12</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox14">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Qty</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox14</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox16">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>="Unit Price "</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox16</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox94">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Disc Amt</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox94</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox78">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>="Total VAT"</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox78</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox18">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>="Sub Total "</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox18</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BackgroundColor>Aqua</BackgroundColor>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.6cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="ProductCode">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!ProductCode.Value</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>ProductCode</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Description">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=iif(parameters!IsWarehouse.Value=True,  Fields!Description.Value.ToString + System.Environment.NewLine + "Batch Number: " + Fields!BatchNumber.Value.ToString + " Expiry Date: " + Fields!ExpiryDate.Value.ToString + System.Environment.NewLine + Fields!SerialNumbers.Value,Fields!Description.Value.ToString + Fields!Comments.Value + System.Environment.NewLine + Fields!SerialNumbers.Value)</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Description</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Quantity">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=iif(Fields!uom.Value.ToString="EA",CInt(Fields!Quantity.Value),Fields!Quantity.Value)</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Quantity</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Unit_Selling_Price">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Round( (Fields!Unit_Selling_Price.Value + (Fields!DiscountAmt.Value * -1)) * fields!ReceiptDisplayRate.Value,2,system.MidpointRounding.AwayFromZero)</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Unit_Selling_Price</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="DiscountAmt">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=formatnumber(round(Fields!DiscountAmt.Value * Fields!Quantity.Value * Fields!ReceiptDisplayRate.Value,2,system.MidpointRounding.AwayFromZero),2)</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>DiscountAmt</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox80">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=iif(Fields!taxexempt.Value=1,"-",formatnumber( Round(Fields!TaxAmt.Value * fields!ReceiptDisplayRate.Value,2,system.MidpointRounding.AwayFromZero),2))</Value>
+                              <Style>
+                                <FontSize>8pt</FontSize>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox80</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Sub_Total">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Round( (Fields!Sub_TotalExcl.Value + Fields!TaxAmt.Value) * fields!ReceiptDisplayRate.value,2,system.MidpointRounding.AwayFromZero)</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Sub_Total</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.6cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox57">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox57</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BottomBorder>
+                          <Style>None</Style>
+                        </BottomBorder>
+                        <LeftBorder>
+                          <Style>None</Style>
+                        </LeftBorder>
+                        <RightBorder>
+                          <Style>None</Style>
+                        </RightBorder>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox65">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox65</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BottomBorder>
+                          <Style>None</Style>
+                        </BottomBorder>
+                        <LeftBorder>
+                          <Style>None</Style>
+                        </LeftBorder>
+                        <RightBorder>
+                          <Style>None</Style>
+                        </RightBorder>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox70">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox70</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <BottomBorder>
+                          <Style>None</Style>
+                        </BottomBorder>
+                        <LeftBorder>
+                          <Style>None</Style>
+                        </LeftBorder>
+                        <RightBorder>
+                          <Style>None</Style>
+                        </RightBorder>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox85">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Product Disc.</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox85</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox96">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>="(" &amp; math.Round(Sum(Fields!DiscountAmt.Value * Fields!Quantity.Value * Fields!ReceiptDisplayRate.Value),2) &amp; ")"</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox96</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox81">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Inv. Disc.</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox81</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox79">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>="(" &amp; math.Round(first(Fields!invdiscount.Value),2) &amp; ")"</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox79</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.65292cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox28">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox28</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox21">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox21</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox22">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox22</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox86">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox86</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox97">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox97</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox82">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Total (Excl. VAT)</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox82</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox24">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=round(Sum(Fields!TotalExcl.Value, "InvTotals") * Sum(Fields!therate.Value, "InvTotals"),2,system.MidpointRounding.AwayFromZero)</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox24</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.73229cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox54">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox54</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox55">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox55</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox58">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox58</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox87">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox87</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox98">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox98</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox83">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Tax VAT</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox83</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox61">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Round(sum(Fields!TaxAmt.Value)*fields!ReceiptDisplayRate.Value,2,system.MidpointRounding.AwayFromZero)</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox61</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.62646cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox62">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox62</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox63">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox63</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox66">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox66</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox52">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox23</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox99">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value />
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox99</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox84">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Invoice Total</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox84</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>None</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox69">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Round((Sum(Fields!TotalExcl.Value, "InvTotals")*Sum(Fields!therate.Value, "InvTotals")) + (sum(Fields!TaxAmt.Value)*Sum(Fields!therate.Value, "InvTotals")),2,system.MidpointRounding.AwayFromZero)</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style>
+                            <TextAlign>Right</TextAlign>
+                          </Style>
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox69</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+          </TablixRows>
+        </TablixBody>
+        <TablixColumnHierarchy>
+          <TablixMembers>
+            <TablixMember />
+            <TablixMember />
+            <TablixMember />
+            <TablixMember />
+            <TablixMember />
+            <TablixMember>
+              <Visibility>
+                <Hidden>=iif(Parameters!hidevat.Value=1,true,false)</Hidden>
+              </Visibility>
+            </TablixMember>
+            <TablixMember />
+          </TablixMembers>
+        </TablixColumnHierarchy>
+        <TablixRowHierarchy>
+          <TablixMembers>
+            <TablixMember>
+              <KeepWithGroup>After</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <Group Name="Details" />
+            </TablixMember>
+            <TablixMember>
+              <Visibility>
+                <Hidden>=iif(Parameters!ShowInvDisc.Value=0,true,false)</Hidden>
+              </Visibility>
+              <KeepWithGroup>Before</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <KeepWithGroup>Before</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <Visibility>
+                <Hidden>=iif(Parameters!hidevat.Value=1,true,false)</Hidden>
+              </Visibility>
+              <KeepWithGroup>Before</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <KeepWithGroup>Before</KeepWithGroup>
+            </TablixMember>
+          </TablixMembers>
+        </TablixRowHierarchy>
+        <DataSetName>InvoiceDetails</DataSetName>
+        <Top>3.88194cm</Top>
+        <Left>0.45042cm</Left>
+        <Height>4.28792cm</Height>
+        <Width>18.85306cm</Width>
+        <ZIndex>3</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <FontSize>8pt</FontSize>
+        </Style>
+      </Tablix>
+      <Textbox Name="Textbox13">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>="Customer Address: " &amp; iif(parameters!LeafbrightA4.Value=1,First(Fields!streetnumber.Value, "CustomerDetails") &amp; ", " &amp; First(Fields!Address.Value, "CustomerDetails") &amp; ", " &amp; First(Fields!city.Value, "CustomerDetails") &amp; ", " &amp; First(Fields!province.Value, "CustomerDetails") , First(Fields!Address.Value, "CustomerDetails") &amp; chr(13) &amp; chr(10) &amp; "Customer City: " &amp; First(Fields!city.Value, "CustomerDetails") &amp; chr(13) &amp; chr(10) &amp; "Customer Province: " &amp; First(Fields!province.Value, "CustomerDetails") &amp; chr(13) &amp; chr(10) &amp; "Customer Phone Number: " &amp; First(Fields!Mobile.Value, "CustomerDetails") &amp; chr(13) &amp; chr(10) &amp; "Customer Email Address: " &amp; First(Fields!Email.Value, "CustomerDetails"))</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox8</rd:DefaultName>
+        <Top>1.76444cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>11cm</Width>
+        <ZIndex>4</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox17">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!InvoiceDetails2.Value, "CustomerDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox8</rd:DefaultName>
+        <Top>2.435cm</Top>
+        <Left>5.70702cm</Left>
+        <Height>0.6cm</Height>
+        <Width>5.65048cm</Width>
+        <ZIndex>5</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox20">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!InvoiceDetails1.Value, "CustomerDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox8</rd:DefaultName>
+        <Top>2.435cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>5.17313cm</Width>
+        <ZIndex>6</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Tablix Name="Tablix2">
+        <TablixBody>
+          <TablixColumns>
+            <TablixColumn>
+              <Width>4.26613cm</Width>
+            </TablixColumn>
+            <TablixColumn>
+              <Width>2.5cm</Width>
+            </TablixColumn>
+          </TablixColumns>
+          <TablixRows>
+            <TablixRow>
+              <Height>0.6cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox9">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Payment Method Desc</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox9</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="Textbox23">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>Amount Paid</Value>
+                              <Style>
+                                <FontWeight>Bold</FontWeight>
+                              </Style>
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>Textbox23</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.6cm</Height>
+              <TablixCells>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="PaymentMethodDesc">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!PaymentMethodDesc.Value</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>PaymentMethodDesc</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+                <TablixCell>
+                  <CellContents>
+                    <Textbox Name="AmountPaid">
+                      <CanGrow>true</CanGrow>
+                      <KeepTogether>true</KeepTogether>
+                      <Paragraphs>
+                        <Paragraph>
+                          <TextRuns>
+                            <TextRun>
+                              <Value>=Fields!AmountPaid.Value</Value>
+                              <Style />
+                            </TextRun>
+                          </TextRuns>
+                          <Style />
+                        </Paragraph>
+                      </Paragraphs>
+                      <rd:DefaultName>AmountPaid</rd:DefaultName>
+                      <Style>
+                        <Border>
+                          <Color>LightGrey</Color>
+                          <Style>Solid</Style>
+                        </Border>
+                        <PaddingLeft>2pt</PaddingLeft>
+                        <PaddingRight>2pt</PaddingRight>
+                        <PaddingTop>2pt</PaddingTop>
+                        <PaddingBottom>2pt</PaddingBottom>
+                      </Style>
+                    </Textbox>
+                  </CellContents>
+                </TablixCell>
+              </TablixCells>
+            </TablixRow>
+          </TablixRows>
+        </TablixBody>
+        <TablixColumnHierarchy>
+          <TablixMembers>
+            <TablixMember />
+            <TablixMember />
+          </TablixMembers>
+        </TablixColumnHierarchy>
+        <TablixRowHierarchy>
+          <TablixMembers>
+            <TablixMember>
+              <KeepWithGroup>After</KeepWithGroup>
+            </TablixMember>
+            <TablixMember>
+              <Group Name="Details1" />
+            </TablixMember>
+          </TablixMembers>
+        </TablixRowHierarchy>
+        <DataSetName>PaymentMethods</DataSetName>
+        <Top>8.34625cm</Top>
+        <Left>0.39277cm</Left>
+        <Height>1.2cm</Height>
+        <Width>6.76613cm</Width>
+        <ZIndex>7</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Tablix>
+      <Textbox Name="txt">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=Parameters!digsig.Value</Value>
+                <Style />
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <Top>10.25208cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>18.81779cm</Width>
+        <ZIndex>8</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox25">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value EvaluationMode="Constant" />
+                <Style>
+                  <FontSize>14pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox25</rd:DefaultName>
+        <Top>0.03528cm</Top>
+        <Left>0.41513cm</Left>
+        <Height>0.78521cm</Height>
+        <Width>3.81186cm</Width>
+        <ZIndex>9</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox27">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!BPNumber_name.Value, "CompanyDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox7</rd:DefaultName>
+        <Top>3.10555cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>2.32771cm</Width>
+        <ZIndex>10</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox29">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!BPNumber.Value, "CustomerDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox7</rd:DefaultName>
+        <Top>3.10555cm</Top>
+        <Left>2.75577cm</Left>
+        <Height>0.6cm</Height>
+        <Width>2.77486cm</Width>
+        <ZIndex>11</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox31">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!VATNumber_name.Value, "CompanyDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox7</rd:DefaultName>
+        <Top>3.10555cm</Top>
+        <Left>5.70702cm</Left>
+        <Height>0.6cm</Height>
+        <Width>2.58765cm</Width>
+        <ZIndex>12</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox34">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!VATNumber.Value, "CustomerDetails")</Value>
+                <Style>
+                  <FontSize>8pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox7</rd:DefaultName>
+        <Top>3.10555cm</Top>
+        <Left>8.36523cm</Left>
+        <Height>0.6cm</Height>
+        <Width>2.99227cm</Width>
+        <ZIndex>13</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox10">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!Comments.Value, "InvoiceDetails")</Value>
+                <Style />
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox10</rd:DefaultName>
+        <Top>10.88736cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>18.81779cm</Width>
+        <ZIndex>14</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Textbox Name="Textbox11">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>=First(Fields!ExtendedComment.Value, "InvoiceDetails")</Value>
+                <Style />
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox11</rd:DefaultName>
+        <Top>9.61681cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.6cm</Height>
+        <Width>18.81779cm</Width>
+        <ZIndex>15</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Rectangle Name="Rectangle2">
+        <ReportItems>
+          <Textbox Name="Textbox3">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Date:</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox3</rd:DefaultName>
+            <Top>0.04122cm</Top>
+            <Left>0.35471cm</Left>
+            <Height>0.6cm</Height>
+            <Width>1.97083cm</Width>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox4">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=left(First(Fields!Sale_Date.Value, "InvoiceDetails"),10)</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox4</rd:DefaultName>
+            <Top>0.04122cm</Top>
+            <Left>2.39609cm</Left>
+            <Height>0.6cm</Height>
+            <Width>3.22093cm</Width>
+            <ZIndex>1</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox5">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Invoice #:</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox3</rd:DefaultName>
+            <Top>0.71177cm</Top>
+            <Left>0.35471cm</Left>
+            <Height>0.6cm</Height>
+            <Width>1.97083cm</Width>
+            <ZIndex>2</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox6">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=first(Fields!Invoice_Number_Display.Value, "InvoiceDetails")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox4</rd:DefaultName>
+            <Top>0.71177cm</Top>
+            <Left>2.39609cm</Left>
+            <Height>0.6cm</Height>
+            <Width>3.22094cm</Width>
+            <ZIndex>3</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox15">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>Sales Rep:</Value>
+                    <Style>
+                      <FontWeight>Bold</FontWeight>
+                    </Style>
+                  </TextRun>
+                </TextRuns>
+                <Style />
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox7</rd:DefaultName>
+            <Top>1.38233cm</Top>
+            <Left>0.35471cm</Left>
+            <Height>0.6cm</Height>
+            <Width>1.97083cm</Width>
+            <ZIndex>4</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox37">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>=First(Fields!realname.Value, "InvoiceUser")</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox37</rd:DefaultName>
+            <Top>1.38233cm</Top>
+            <Left>2.39609cm</Left>
+            <Height>0.6cm</Height>
+            <Width>3.22094cm</Width>
+            <ZIndex>5</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+          <Textbox Name="Textbox19">
+            <CanGrow>true</CanGrow>
+            <KeepTogether>true</KeepTogether>
+            <Paragraphs>
+              <Paragraph>
+                <TextRuns>
+                  <TextRun>
+                    <Value>="Currency: " &amp; Parameters!paymentmethod.Value</Value>
+                    <Style />
+                  </TextRun>
+                </TextRuns>
+                <Style>
+                  <TextAlign>Right</TextAlign>
+                </Style>
+              </Paragraph>
+            </Paragraphs>
+            <rd:DefaultName>Textbox19</rd:DefaultName>
+            <Top>2.05288cm</Top>
+            <Left>0.35471cm</Left>
+            <Height>0.6cm</Height>
+            <Width>5.26233cm</Width>
+            <ZIndex>6</ZIndex>
+            <Style>
+              <Border>
+                <Style>Solid</Style>
+              </Border>
+              <PaddingLeft>2pt</PaddingLeft>
+              <PaddingRight>2pt</PaddingRight>
+              <PaddingTop>2pt</PaddingTop>
+              <PaddingBottom>2pt</PaddingBottom>
+            </Style>
+          </Textbox>
+        </ReportItems>
+        <KeepTogether>true</KeepTogether>
+        <Top>1.05267cm</Top>
+        <Left>13.68645cm</Left>
+        <Height>2.65288cm</Height>
+        <Width>5.61704cm</Width>
+        <ZIndex>16</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+        </Style>
+      </Rectangle>
+      <Textbox Name="Textbox60">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Goods received in good order by:</Value>
+                <Style>
+                  <FontSize>7pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox59</rd:DefaultName>
+        <Top>11.55792cm</Top>
+        <Left>0.3575cm</Left>
+        <Height>0.46771cm</Height>
+        <Width>4.40619cm</Width>
+        <ZIndex>17</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <VerticalAlign>Bottom</VerticalAlign>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Line Name="Line3">
+        <Top>12.02563cm</Top>
+        <Left>4.7417cm</Left>
+        <Height>0cm</Height>
+        <Width>5.97331cm</Width>
+        <ZIndex>18</ZIndex>
+        <Style>
+          <Border>
+            <Style>Solid</Style>
+          </Border>
+        </Style>
+      </Line>
+      <Textbox Name="Textbox64">
+        <CanGrow>true</CanGrow>
+        <KeepTogether>true</KeepTogether>
+        <Paragraphs>
+          <Paragraph>
+            <TextRuns>
+              <TextRun>
+                <Value>Signature:</Value>
+                <Style>
+                  <FontSize>7pt</FontSize>
+                  <FontWeight>Bold</FontWeight>
+                </Style>
+              </TextRun>
+            </TextRuns>
+            <Style />
+          </Paragraph>
+        </Paragraphs>
+        <rd:DefaultName>Textbox59</rd:DefaultName>
+        <Top>11.55792cm</Top>
+        <Left>11.17154cm</Left>
+        <Height>0.46771cm</Height>
+        <Width>1.78682cm</Width>
+        <ZIndex>19</ZIndex>
+        <Style>
+          <Border>
+            <Style>None</Style>
+          </Border>
+          <VerticalAlign>Bottom</VerticalAlign>
+          <PaddingLeft>2pt</PaddingLeft>
+          <PaddingRight>2pt</PaddingRight>
+          <PaddingTop>2pt</PaddingTop>
+          <PaddingBottom>2pt</PaddingBottom>
+        </Style>
+      </Textbox>
+      <Line Name="Line4">
+        <Top>12.02563cm</Top>
+        <Left>13.11423cm</Left>
+        <Height>0cm</Height>
+        <Width>6.06106cm</Width>
+        <ZIndex>20</ZIndex>
+        <Style>
+          <Border>
+            <Style>Solid</Style>
+          </Border>
+        </Style>
+      </Line>
+    </ReportItems>
+    <Height>12.10445cm</Height>
+    <Style />
+  </Body>
+  <Width>19.30349cm</Width>
+  <Page>
+    <PageHeader>
+      <Height>2.79825cm</Height>
+      <PrintOnFirstPage>true</PrintOnFirstPage>
+      <PrintOnLastPage>true</PrintOnLastPage>
+      <ReportItems>
+        <Line Name="Line1">
+          <Top>2.7cm</Top>
+          <Left>0.15463in</Left>
+          <Height>0cm</Height>
+          <Width>18.87544cm</Width>
+          <Style>
+            <Border>
+              <Style>Solid</Style>
+            </Border>
+          </Style>
+        </Line>
+        <Image Name="Image1">
+          <Source>Database</Source>
+          <Value>=First(Fields!logo.Value, "CompanyDetails")</Value>
+          <MIMEType>image/jpeg</MIMEType>
+          <Sizing>FitProportional</Sizing>
+          <Top>0.09751cm</Top>
+          <Left>0.41513cm</Left>
+          <Height>2.53193cm</Height>
+          <Width>5.63717cm</Width>
+          <ZIndex>1</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </Image>
+        <Textbox Name="Textbox46">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!BPNumber_name.Value, "CompanyDetails") &amp; First(Fields!BPNumber.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.08709in</Top>
+          <Left>6.12286cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.09566in</Width>
+          <ZIndex>2</ZIndex>
+          <Visibility>
+            <Hidden>=iif(First(Fields!BPNumber_name.Value, "CompanyDetails")="",true,false)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox47">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Vendor_name.Value, "CompanyDetails") &amp; First(Fields!VendorNumber.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.54793in</Top>
+          <Left>6.12286cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.09566in</Width>
+          <ZIndex>3</ZIndex>
+          <Visibility>
+            <Hidden>=iif(First(Fields!Vendor_name.Value, "CompanyDetails")="",true,false)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox48">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Email.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.77122in</Top>
+          <Left>6.12286cm</Left>
+          <Height>0.6cm</Height>
+          <Width>2.09566in</Width>
+          <ZIndex>4</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox67">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!VATNumber_name.Value, "CompanyDetails") &amp;  First(Fields!VatNumber.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.31751in</Top>
+          <Left>6.12286cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.09566in</Width>
+          <ZIndex>5</ZIndex>
+          <Visibility>
+            <Hidden>=iif(First(Fields!VATNumber_name.Value, "CompanyDetails")="",true,false)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox1">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Company.Value, "CompanyDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.08709in</Top>
+          <Left>11.60124cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.99635in</Width>
+          <ZIndex>6</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox44">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Address.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.31751in</Top>
+          <Left>11.60124cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.99635in</Width>
+          <ZIndex>7</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox45">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Tel.Value, "BranchDetails") + "  " + First(Fields!Tel2.Value, "BranchDetails") + "  " + First(Fields!Tel3.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.77122in</Top>
+          <Left>11.60124cm</Left>
+          <Height>0.6cm</Height>
+          <Width>2.99635in</Width>
+          <ZIndex>8</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox53">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Address2.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>8pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox1</rd:DefaultName>
+          <Top>0.54793in</Top>
+          <Left>11.60124cm</Left>
+          <Height>0.55cm</Height>
+          <Width>2.99634in</Width>
+          <ZIndex>9</ZIndex>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+      </ReportItems>
+      <Style>
+        <Border>
+          <Style>None</Style>
+        </Border>
+      </Style>
+    </PageHeader>
+    <PageFooter>
+      <Height>3.85332cm</Height>
+      <PrintOnFirstPage>true</PrintOnFirstPage>
+      <PrintOnLastPage>true</PrintOnLastPage>
+      <ReportItems>
+        <Textbox Name="Textbox39">
+          <CanGrow>true</CanGrow>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=Globals!PageNumber &amp; "/" &amp; Globals!TotalPages</Value>
+                  <Style />
+                </TextRun>
+              </TextRuns>
+              <Style>
+                <TextAlign>Right</TextAlign>
+              </Style>
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox39</rd:DefaultName>
+          <Top>1.17847in</Top>
+          <Left>6.57203in</Left>
+          <Height>0.24962in</Height>
+          <Width>1in</Width>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Rectangle Name="Rectangle1">
+          <ReportItems>
+            <Textbox Name="Textbox30">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Banking Details</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Left>0.00285in</Left>
+              <Height>0.42cm</Height>
+              <Width>4.42854cm</Width>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox32">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Currency: " + First(Fields!Currency.Value, "BankingDetails")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>0.45528cm</Top>
+              <Left>0.02959cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.40619cm</Width>
+              <ZIndex>1</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox35">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Bank: " + First(Fields!BankName.Value, "BankingDetails")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>0.91056cm</Top>
+              <Left>0.03527cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.40619cm</Width>
+              <ZIndex>2</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox38">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Branch: " + First(Fields!Branch.Value, "BankingDetails")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>1.36583cm</Top>
+              <Left>0.05763cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.40619cm</Width>
+              <ZIndex>3</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox41">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Acc: " + First(Fields!Account_Name.Value, "BankingDetails")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>1.82111cm</Top>
+              <Left>0.05763cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.4cm</Width>
+              <ZIndex>4</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox42">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Acc Number: " + First(Fields!Account_Number.Value, "BankingDetails")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>2.27639cm</Top>
+              <Left>0.05763cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.40619cm</Width>
+              <ZIndex>5</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox71">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Currency: " + First(Fields!Currency.Value, "BankingDetails2")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>0.45529cm</Top>
+              <Left>4.50634cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.26072cm</Width>
+              <ZIndex>6</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox72">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Bank: " + First(Fields!BankName.Value, "BankingDetails2")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>0.91056cm</Top>
+              <Left>4.50634cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.26072cm</Width>
+              <ZIndex>7</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox74">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Branch: " + First(Fields!Branch.Value, "BankingDetails2")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>1.36584cm</Top>
+              <Left>4.50634cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.26072cm</Width>
+              <ZIndex>8</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox75">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Acc: " + First(Fields!Account_Name.Value, "BankingDetails2")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>1.82112cm</Top>
+              <Left>4.50634cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.26072cm</Width>
+              <ZIndex>9</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+            <Textbox Name="Textbox76">
+              <CanGrow>true</CanGrow>
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>="Acc Number: " + First(Fields!Account_Number.Value, "BankingDetails2")</Value>
+                      <Style>
+                        <FontSize>7pt</FontSize>
+                        <FontWeight>Normal</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <rd:DefaultName>Textbox7</rd:DefaultName>
+              <Top>2.2764cm</Top>
+              <Left>4.52779cm</Left>
+              <Height>0.42cm</Height>
+              <Width>4.23927cm</Width>
+              <ZIndex>10</ZIndex>
+              <Style>
+                <Border>
+                  <Style>None</Style>
+                </Border>
+                <VerticalAlign>Bottom</VerticalAlign>
+                <PaddingLeft>2pt</PaddingLeft>
+                <PaddingRight>2pt</PaddingRight>
+                <PaddingTop>2pt</PaddingTop>
+                <PaddingBottom>2pt</PaddingBottom>
+              </Style>
+            </Textbox>
+          </ReportItems>
+          <KeepTogether>true</KeepTogether>
+          <Top>0.2936cm</Top>
+          <Left>0.3575cm</Left>
+          <Height>3.33375cm</Height>
+          <Width>9.28625cm</Width>
+          <ZIndex>1</ZIndex>
+          <Visibility>
+            <Hidden>=iif(Parameters!ShowFooter.Value=1,false,true)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+          </Style>
+        </Rectangle>
+        <Line Name="Line2">
+          <Top>0.06948cm</Top>
+          <Left>0.36631cm</Left>
+          <Height>0cm</Height>
+          <Width>18.9019cm</Width>
+          <ZIndex>2</ZIndex>
+          <Style>
+            <Border>
+              <Style>Solid</Style>
+            </Border>
+          </Style>
+        </Line>
+        <Textbox Name="Textbox33">
+          <CanGrow>true</CanGrow>
+          <CanShrink>true</CanShrink>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=First(Fields!Footnote.Value, "BranchDetails")</Value>
+                  <Style>
+                    <FontSize>7pt</FontSize>
+                    <FontWeight>Normal</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style />
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox7</rd:DefaultName>
+          <Top>0.81942cm</Top>
+          <Left>14.82673cm</Left>
+          <Height>1.50695cm</Height>
+          <Width>4.40619cm</Width>
+          <ZIndex>3</ZIndex>
+          <Visibility>
+            <Hidden>=iif(Parameters!ShowFooter.Value=1,false,true)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Textbox Name="Textbox59">
+          <CanGrow>true</CanGrow>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>Terms and Conditions</Value>
+                  <Style>
+                    <FontSize>7pt</FontSize>
+                    <FontWeight>Bold</FontWeight>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style />
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox59</rd:DefaultName>
+          <Top>0.24587cm</Top>
+          <Left>14.82673cm</Left>
+          <Height>0.46771cm</Height>
+          <Width>4.40619cm</Width>
+          <ZIndex>4</ZIndex>
+          <Visibility>
+            <Hidden>=iif(Parameters!ShowFooter.Value=1,false,true)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <VerticalAlign>Bottom</VerticalAlign>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+        <Line Name="Line5">
+          <Top>0.29359cm</Top>
+          <Left>9.28cm</Left>
+          <Height>3.33375cm</Height>
+          <Width>0cm</Width>
+          <ZIndex>5</ZIndex>
+          <Visibility>
+            <Hidden>=iif(Parameters!ShowFooter.Value=1,false,true)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>Solid</Style>
+            </Border>
+          </Style>
+        </Line>
+        <Textbox Name="Textbox116">
+          <CanGrow>true</CanGrow>
+          <KeepTogether>true</KeepTogether>
+          <Paragraphs>
+            <Paragraph>
+              <TextRuns>
+                <TextRun>
+                  <Value>=Parameters!BranchNetwork.Value.ToString</Value>
+                  <Style>
+                    <FontSize>7pt</FontSize>
+                  </Style>
+                </TextRun>
+              </TextRuns>
+              <Style />
+            </Paragraph>
+          </Paragraphs>
+          <rd:DefaultName>Textbox116</rd:DefaultName>
+          <Top>0.29359cm</Top>
+          <Left>9.32625cm</Left>
+          <Height>3.33375cm</Height>
+          <Width>5.42992cm</Width>
+          <ZIndex>6</ZIndex>
+          <Visibility>
+            <Hidden>=iif(Parameters!ShowFooter.Value=1,false,true)</Hidden>
+          </Visibility>
+          <Style>
+            <Border>
+              <Style>None</Style>
+            </Border>
+            <PaddingLeft>2pt</PaddingLeft>
+            <PaddingRight>2pt</PaddingRight>
+            <PaddingTop>2pt</PaddingTop>
+            <PaddingBottom>2pt</PaddingBottom>
+          </Style>
+        </Textbox>
+      </ReportItems>
+      <Style>
+        <Border>
+          <Style>None</Style>
+        </Border>
+      </Style>
+    </PageFooter>
+    <PageHeight>27.94cm</PageHeight>
+    <PageWidth>21.59cm</PageWidth>
+    <LeftMargin>0.5cm</LeftMargin>
+    <RightMargin>0.5cm</RightMargin>
+    <TopMargin>0.5cm</TopMargin>
+    <BottomMargin>0cm</BottomMargin>
+    <ColumnSpacing>1.27cm</ColumnSpacing>
+    <Style />
+  </Page>
+  <AutoRefresh>0</AutoRefresh>
+  <DataSources>
+    <DataSource Name="POSDataSet">
+      <ConnectionProperties>
+        <DataProvider>System.Data.DataSet</DataProvider>
+        <ConnectString>/* Local Connection */</ConnectString>
+      </ConnectionProperties>
+      <rd:DataSourceID>f7c0e47b-13a7-43da-8d07-1dbe96ce000d</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <DataSets>
+    <DataSet Name="PaymentMethods">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="InvoiceNumber">
+          <DataField>InvoiceNumber</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="PaymentMethodID">
+          <DataField>PaymentMethodID</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="PaymentMethodDesc">
+          <DataField>PaymentMethodDesc</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="AmountPaid">
+          <DataField>AmountPaid</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+        <Field Name="EntryNo">
+          <DataField>EntryNo</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="branch">
+          <DataField>branch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="coid">
+          <DataField>coid</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Uploaded">
+          <DataField>Uploaded</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="rate">
+          <DataField>rate</DataField>
+          <rd:TypeName>System.Double</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetPaymentMethodsForInvoice</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetPaymentMethodsForInvoiceTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="InvoiceUser">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="realname">
+          <DataField>realname</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetUserForInvoice</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetUserForInvoiceTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="CustomerDetails">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="CustomerName">
+          <DataField>CustomerName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Address">
+          <DataField>Address</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ContactName">
+          <DataField>ContactName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Mobile">
+          <DataField>Mobile</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Email">
+          <DataField>Email</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Uploaded">
+          <DataField>Uploaded</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="EntryNo">
+          <DataField>EntryNo</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="coid">
+          <DataField>coid</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="branch">
+          <DataField>branch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="InvoiceDetails1">
+          <DataField>InvoiceDetails1</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="InvoiceDetails2">
+          <DataField>InvoiceDetails2</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel">
+          <DataField>Tel</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="IDNumber">
+          <DataField>IDNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="DOB">
+          <DataField>DOB</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="Sex">
+          <DataField>Sex</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="DateCreated">
+          <DataField>DateCreated</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="CreatedBy">
+          <DataField>CreatedBy</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="VATNumber">
+          <DataField>VATNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BPNumber">
+          <DataField>BPNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="RegisteredCoName">
+          <DataField>RegisteredCoName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="AccountLimit">
+          <DataField>AccountLimit</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="IsActive">
+          <DataField>IsActive</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="CustomerGroupID">
+          <DataField>CustomerGroupID</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="province">
+          <DataField>province</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="streetnumber">
+          <DataField>streetnumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="city">
+          <DataField>city</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>FetchCustomerDetailsFromInv</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>FetchCustomerDetailsFromInvTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="InvoiceDetails">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Sale_Date">
+          <DataField>Sale_Date</DataField>
+          <rd:TypeName>System.DateTime</rd:TypeName>
+        </Field>
+        <Field Name="Invoice_Number">
+          <DataField>Invoice_Number</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Product_ID">
+          <DataField>Product_ID</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Product_Code">
+          <DataField>Product_Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Description">
+          <DataField>Description</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Quantity">
+          <DataField>Quantity</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Unit_Selling_Price">
+          <DataField>Unit_Selling_Price</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Sub_Total">
+          <DataField>Sub_Total</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Ref">
+          <DataField>Ref</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ProductCode">
+          <DataField>ProductCode</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BatchNumber">
+          <DataField>BatchNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="ExpiryDate">
+          <DataField>ExpiryDate</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="DoneBy">
+          <DataField>DoneBy</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="usereceiptdisplay">
+          <DataField>usereceiptdisplay</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="ReceiptDisplayRate">
+          <DataField>ReceiptDisplayRate</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="ReceiptDisplayPaymentMethod">
+          <DataField>ReceiptDisplayPaymentMethod</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="TaxAmt">
+          <DataField>TaxAmt</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="Sub_TotalExcl">
+          <DataField>Sub_TotalExcl</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="ReceiptDisplayPaymentMethod1">
+          <DataField>ReceiptDisplayPaymentMethod1</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="UseReceiptDisplay1">
+          <DataField>UseReceiptDisplay1</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="Invoice_Number_Display">
+          <DataField>Invoice_Number_Display</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Comments">
+          <DataField>Comments</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="PaymentMethod">
+          <DataField>PaymentMethod</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="ExtendedComment">
+          <DataField>ExtendedComment</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="invdiscount">
+          <DataField>invdiscount</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="taxexempt">
+          <DataField>taxexempt</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="DiscountAmt">
+          <DataField>DiscountAmt</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="uom">
+          <DataField>uom</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="taxrate">
+          <DataField>taxrate</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="OrderNo">
+          <DataField>OrderNo</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="DebitNoteNumber">
+          <DataField>DebitNoteNumber</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="manufacturer">
+          <DataField>manufacturer</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="SubTotalIncl_New">
+          <DataField>SubTotalIncl_New</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="SerialNumbers">
+          <DataField>SerialNumbers</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>SalesByInvoiceNumber</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>SalesByInvoiceNumberTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="BranchDetails">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Branch">
+          <DataField>Branch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Coid">
+          <DataField>Coid</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="Visible">
+          <DataField>Visible</DataField>
+          <rd:TypeName>System.Boolean</rd:TypeName>
+        </Field>
+        <Field Name="Colour">
+          <DataField>Colour</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel">
+          <DataField>Tel</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel2">
+          <DataField>Tel2</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel3">
+          <DataField>Tel3</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Email">
+          <DataField>Email</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Address">
+          <DataField>Address</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Address2">
+          <DataField>Address2</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BPNumber">
+          <DataField>BPNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="CompanyName">
+          <DataField>CompanyName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Footnote">
+          <DataField>Footnote</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="VatNumber">
+          <DataField>VatNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="VendorNumber">
+          <DataField>VendorNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetBranchDetails1</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetBranchDetails1TableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="BankingDetails">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="BankName">
+          <DataField>BankName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Branch">
+          <DataField>Branch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Account_Name">
+          <DataField>Account_Name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Account_Number">
+          <DataField>Account_Number</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Swift_Code">
+          <DataField>Swift_Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Currency">
+          <DataField>Currency</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetBankingDetails</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetBankingDetailsTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="BankingDetails2">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="BankName">
+          <DataField>BankName</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Branch">
+          <DataField>Branch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Account_Name">
+          <DataField>Account_Name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Account_Number">
+          <DataField>Account_Number</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Swift_Code">
+          <DataField>Swift_Code</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Currency">
+          <DataField>Currency</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetBankingDetails2</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetBankingDetails2TableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="InvTotals">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Invoice_Number">
+          <DataField>Invoice_Number</DataField>
+          <rd:TypeName>System.Int32</rd:TypeName>
+        </Field>
+        <Field Name="TotalIncl">
+          <DataField>TotalIncl</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="TotalExcl">
+          <DataField>TotalExcl</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+        <Field Name="therate">
+          <DataField>therate</DataField>
+          <rd:TypeName>System.Decimal</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>SalesByInvoiceNumberTotals</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>SalesByInvoiceNumberTotalsTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+    <DataSet Name="CompanyDetails">
+      <Query>
+        <DataSourceName>POSDataSet</DataSourceName>
+        <CommandText>/* Local Query */</CommandText>
+      </Query>
+      <Fields>
+        <Field Name="Company">
+          <DataField>Company</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Address">
+          <DataField>Address</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel">
+          <DataField>Tel</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="logo">
+          <DataField>logo</DataField>
+          <rd:TypeName>System.Byte[]</rd:TypeName>
+        </Field>
+        <Field Name="VendorNumber">
+          <DataField>VendorNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Email">
+          <DataField>Email</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="website">
+          <DataField>website</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel2">
+          <DataField>Tel2</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Tel3">
+          <DataField>Tel3</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BPNumber">
+          <DataField>BPNumber</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="bank">
+          <DataField>bank</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="bankbranch">
+          <DataField>bankbranch</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="bankaccnum">
+          <DataField>bankaccnum</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="bankaccname">
+          <DataField>bankaccname</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="bankswiftcode">
+          <DataField>bankswiftcode</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="InvoiceTerms">
+          <DataField>InvoiceTerms</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BaseCurrency">
+          <DataField>BaseCurrency</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="BPNumber_name">
+          <DataField>BPNumber_name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="VATNumber_name">
+          <DataField>VATNumber_name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+        <Field Name="Vendor_name">
+          <DataField>Vendor_name</DataField>
+          <rd:TypeName>System.String</rd:TypeName>
+        </Field>
+      </Fields>
+      <rd:DataSetInfo>
+        <rd:DataSetName>POSDataSet</rd:DataSetName>
+        <rd:SchemaPath>C:\Work\Projects\QuantumPOS\PointOfSale\PointOfSale\POSDataSet.xsd</rd:SchemaPath>
+        <rd:TableName>GetCompanyDetailsForCoid</rd:TableName>
+        <rd:TableAdapterFillMethod>Fill</rd:TableAdapterFillMethod>
+        <rd:TableAdapterGetDataMethod>GetData</rd:TableAdapterGetDataMethod>
+        <rd:TableAdapterName>GetCompanyDetailsForCoidTableAdapter</rd:TableAdapterName>
+      </rd:DataSetInfo>
+    </DataSet>
+  </DataSets>
+  <ReportParameters>
+    <ReportParameter Name="BranchNetwork">
+      <DataType>String</DataType>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="IsWarehouse">
+      <DataType>Boolean</DataType>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="digsig">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="paymentmethod">
+      <DataType>String</DataType>
+      <Nullable>true</Nullable>
+      <AllowBlank>true</AllowBlank>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="reprint">
+      <DataType>Integer</DataType>
+      <Nullable>true</Nullable>
+      <DefaultValue>
+        <Values>
+          <Value xsi:nil="true" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" />
+        </Values>
+      </DefaultValue>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="isfiscal">
+      <DataType>String</DataType>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="ShowFooter">
+      <DataType>Integer</DataType>
+      <Nullable>true</Nullable>
+      <DefaultValue>
+        <Values>
+          <Value>1</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="invheader">
+      <DataType>String</DataType>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="ShowInvDisc">
+      <DataType>Integer</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>0</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="hidevat">
+      <DataType>Integer</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>0</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+    <ReportParameter Name="LeafbrightA4">
+      <DataType>Integer</DataType>
+      <DefaultValue>
+        <Values>
+          <Value>0</Value>
+        </Values>
+      </DefaultValue>
+      <Prompt>ReportParameter1</Prompt>
+    </ReportParameter>
+  </ReportParameters>
+  <rd:ReportUnitType>Cm</rd:ReportUnitType>
+  <rd:ReportID>7a5f2623-ee0b-4491-ac1b-a20e110ae198</rd:ReportID>
+</Report>

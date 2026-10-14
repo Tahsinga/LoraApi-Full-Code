@@ -11,6 +11,7 @@ namespace POSViewer;
 public sealed class BranchSyncDashboardForm : Form
 {
     private const int BranchCompanyId = 412;
+    private const int BranchSqlCommandTimeoutSeconds = 120;
     private readonly ConnectionForm _connectionForm;
     private readonly ConnectionSettings _settings;
     private readonly ListBox _syncQueueListBox = new();
@@ -263,20 +264,41 @@ public sealed class BranchSyncDashboardForm : Form
                     await ApplyBranchProductDeletionAsync(productDeletion, client, branchName);
                 }
 
-                foreach (var transfer in pendingTransfers.Take(1))
+                var transferQueue = new Queue<StockTransfer>(pendingTransfers);
+                var transferQueueFailed = false;
+                while (true)
                 {
+                    StockTransfer? transfer;
+                    if (!transferQueue.TryDequeue(out transfer))
+                    {
+                        transfer = await GetNextPendingStockTransferAsync(client, branchName);
+                        if (transfer is null)
+                        {
+                            break;
+                        }
+                    }
+
                     if (!string.Equals(transfer.branch?.Trim(), branchName.Trim(), StringComparison.OrdinalIgnoreCase))
                     {
                         _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] ✗ SAFETY CHECK: Ignored stock transfer for branch {transfer.branch}; this app is {branchName}.");
-                        continue;
+                        transferQueueFailed = true;
+                        break;
                     }
 
-                    await ApplyStockTransferAsync(transfer, client, branchName);
+                    if (!await ApplyStockTransferAsync(transfer, client, branchName))
+                    {
+                        transferQueueFailed = true;
+                        break;
+                    }
                 }
 
-                _statusLabel.ForeColor = Color.DarkGreen;
-                _statusLabel.Text = $"✓ Sync complete | Branch: {branchName}";
-                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] === SYNC COMPLETE ===");
+                _statusLabel.ForeColor = transferQueueFailed ? Color.DarkOrange : Color.DarkGreen;
+                _statusLabel.Text = transferQueueFailed
+                    ? $"Transfer queued for retry | Branch: {branchName}"
+                    : $"✓ Sync complete | Branch: {branchName}";
+                _syncQueueListBox.Items.Insert(0, transferQueueFailed
+                    ? $"[{DateTime.Now:HH:mm:ss}] [TRANSFER] Queue paused; retrying from the oldest pending transfer on the next poll."
+                    : $"[{DateTime.Now:HH:mm:ss}] === SYNC COMPLETE ===");
             }
             else
             {
@@ -333,15 +355,15 @@ public sealed class BranchSyncDashboardForm : Form
                     FROM [dbo].[ProductStockBalances] AS stock
                     WHERE stock.ProductID = p.ProductID
                         AND stock.coid = @companyId
-                        AND UPPER(LTRIM(RTRIM(stock.branch))) = UPPER(@branch)
+                        AND stock.branch = @branch
                 ) AS branch_stock
                 LEFT JOIN (
                     SELECT movement.ProductID,
-                        SUM(CASE WHEN movement.TranCode = 3 AND movement.DateCancelled IS NULL THEN movement.Quantity ELSE 0 END) AS SoldQuantity,
-                        SUM(CASE WHEN movement.TranCode = 1 THEN movement.Quantity ELSE 0 END) AS ReceivedQuantity
+                        SUM(CASE WHEN movement.TranCode = 3 AND (movement.DateCancelled IS NULL OR movement.DateCancelled = 0) THEN ABS(COALESCE(movement.Quantity, 0)) ELSE 0 END) AS SoldQuantity,
+                        SUM(CASE WHEN movement.TranCode = 1 THEN ABS(COALESCE(movement.Quantity, 0)) ELSE 0 END) AS ReceivedQuantity
                     FROM [dbo].[Movement] AS movement
                     WHERE movement.coid = @companyId
-                        AND UPPER(LTRIM(RTRIM(movement.branch))) = UPPER(@branch)
+                        AND movement.branch = @branch
                         AND movement.TranDate = @movementDate
                         AND movement.TranCode IN (1, 3)
                     GROUP BY movement.ProductID
@@ -448,9 +470,28 @@ public sealed class BranchSyncDashboardForm : Form
             using var connection = new SqlConnection(_settings.BuildConnectionString());
             await connection.OpenAsync();
             var productIds = new HashSet<int>();
-            using (var idsCommand = new SqlCommand("SELECT ProductID FROM [dbo].[Products] WHERE ProductID IS NOT NULL;", connection))
-            using (var reader = await idsCommand.ExecuteReaderAsync())
+            var requestedProductIds = products
+                .Where(product => product.product_id > 0 && !string.IsNullOrWhiteSpace(product.product_name))
+                .Select(product => product.product_id)
+                .Distinct()
+                .ToArray();
+            foreach (var productIdBatch in requestedProductIds.Chunk(500))
             {
+                var parameterNames = Enumerable.Range(0, productIdBatch.Length)
+                    .Select(index => $"@productId{index}")
+                    .ToArray();
+                using var idsCommand = new SqlCommand(
+                    $"SELECT ProductID FROM [dbo].[Products] WHERE ProductID IN ({string.Join(",", parameterNames)});",
+                    connection)
+                {
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
+                };
+                for (var index = 0; index < productIdBatch.Length; index++)
+                {
+                    idsCommand.Parameters.AddWithValue(parameterNames[index], productIdBatch[index]);
+                }
+
+                using var reader = await idsCommand.ExecuteReaderAsync();
                 while (await reader.ReadAsync())
                 {
                     productIds.Add(Convert.ToInt32(reader[0], CultureInfo.InvariantCulture));
@@ -605,7 +646,10 @@ public sealed class BranchSyncDashboardForm : Form
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             );";
 
-        using (var identityOnCommand = new SqlCommand("SET IDENTITY_INSERT [dbo].[Products] ON;", connection, transaction))
+        using (var identityOnCommand = new SqlCommand("SET IDENTITY_INSERT [dbo].[Products] ON;", connection, transaction)
+        {
+            CommandTimeout = BranchSqlCommandTimeoutSeconds
+        })
         {
             await identityOnCommand.ExecuteNonQueryAsync();
         }
@@ -613,7 +657,10 @@ public sealed class BranchSyncDashboardForm : Form
         try
         {
             var uniqueProductCode = await ResolveUniqueProductCodeAsync(connection, transaction, productCode, BranchCompanyId);
-            using var productCommand = new SqlCommand(insertProductSql, connection, transaction);
+            using var productCommand = new SqlCommand(insertProductSql, connection, transaction)
+            {
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            };
             productCommand.Parameters.AddWithValue("@productId", productId);
             productCommand.Parameters.AddWithValue("@productName", productName);
             productCommand.Parameters.AddWithValue("@productCode", uniqueProductCode);
@@ -626,7 +673,10 @@ public sealed class BranchSyncDashboardForm : Form
         }
         finally
         {
-            using var identityOffCommand = new SqlCommand("SET IDENTITY_INSERT [dbo].[Products] OFF;", connection, transaction);
+            using var identityOffCommand = new SqlCommand("SET IDENTITY_INSERT [dbo].[Products] OFF;", connection, transaction)
+            {
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            };
             await identityOffCommand.ExecuteNonQueryAsync();
         }
     }
@@ -645,7 +695,10 @@ public sealed class BranchSyncDashboardForm : Form
         for (var suffix = 0; ; suffix++)
         {
             var candidate = suffix == 0 ? preferredCode : $"{preferredCode}-{suffix}";
-            using var command = new SqlCommand(productCodeExistsSql, connection, transaction);
+            using var command = new SqlCommand(productCodeExistsSql, connection, transaction)
+            {
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            };
             command.Parameters.AddWithValue("@productCode", candidate);
             command.Parameters.AddWithValue("@coid", companyId);
             if (await command.ExecuteScalarAsync() is null)
@@ -1125,7 +1178,16 @@ public sealed class BranchSyncDashboardForm : Form
             : 0m;
     }
 
-    private async Task ApplyStockTransferAsync(StockTransfer transfer, HttpClient client, string branchName)
+    private async Task<StockTransfer?> GetNextPendingStockTransferAsync(HttpClient client, string branchName)
+    {
+        var branchFilter = Uri.EscapeDataString(branchName);
+        using var response = await client.GetAsync($"{_settings.GetApiBaseUrl()}/api/stock/transfers/pending/?branch={branchFilter}");
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<PendingStockTransfersResponse>();
+        return result?.pending_transfers?.FirstOrDefault();
+    }
+
+    private async Task<bool> ApplyStockTransferAsync(StockTransfer transfer, HttpClient client, string branchName)
     {
         var success = false;
         var error = string.Empty;
@@ -1173,6 +1235,7 @@ public sealed class BranchSyncDashboardForm : Form
         using var content = new StringContent(JsonSerializer.Serialize(completion), Encoding.UTF8, "application/json");
         var completionResponse = await client.PostAsync($"{_settings.GetApiBaseUrl()}/api/stock/transfers/complete/", content);
         _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [TRANSFER] API acknowledgement for {transfer.id}: {(completionResponse.IsSuccessStatusCode ? "accepted" : completionResponse.StatusCode)}");
+        return success && completionResponse.IsSuccessStatusCode;
     }
 
     private async Task<decimal> RecordStockMovementAsync(
@@ -1188,7 +1251,23 @@ public sealed class BranchSyncDashboardForm : Form
         }
 
         using var connection = new SqlConnection(_settings.BuildConnectionString());
+        if (isStockTake)
+        {
+            var authenticationMode = _settings.IntegratedSecurity ? "Windows" : "SQL Server";
+            _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Opening POS database with {authenticationMode} authentication for command {transfer.id}.");
+        }
         await connection.OpenAsync();
+        if (isStockTake)
+        {
+            _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] POS database connection opened for command {transfer.id}.");
+        }
+        using (var lockTimeoutCommand = new SqlCommand("SET LOCK_TIMEOUT 15000;", connection)
+        {
+            CommandTimeout = 5
+        })
+        {
+            await lockTimeoutCommand.ExecuteNonQueryAsync();
+        }
         using var transaction = connection.BeginTransaction();
         try
         {
@@ -1203,14 +1282,21 @@ public sealed class BranchSyncDashboardForm : Form
                 ORDER BY EntryNo DESC;";
             using (var existingMovementCommand = new SqlCommand(existingMovementSql, connection, transaction))
             {
+                existingMovementCommand.CommandTimeout = BranchSqlCommandTimeoutSeconds;
                 existingMovementCommand.Parameters.AddWithValue("@commandMarker", commandMarker);
                 existingMovementCommand.Parameters.AddWithValue("@productId", transfer.product_id);
                 existingMovementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
                 existingMovementCommand.Parameters.AddWithValue("@branch", branchName);
+                if (isStockTake)
+                {
+                    _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Checking for an existing movement for command {transfer.id}.");
+                }
                 var existingMovement = await existingMovementCommand.ExecuteScalarAsync();
                 if (existingMovement is not null and not DBNull)
                 {
-                    var existingBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
+                    var existingBalance = isStockTake
+                        ? targetQuantity
+                        : await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
                     await transaction.CommitAsync();
                     _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] Existing movement found for command {transfer.id}; skipped duplicate stock update.");
                     return existingBalance;
@@ -1224,8 +1310,13 @@ public sealed class BranchSyncDashboardForm : Form
             decimal productCost;
             using (var productCommand = new SqlCommand(productSql, connection, transaction))
             {
+                productCommand.CommandTimeout = BranchSqlCommandTimeoutSeconds;
                 productCommand.Parameters.AddWithValue("@productId", transfer.product_id);
                 productCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+                if (isStockTake)
+                {
+                    _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Looking up POS product {transfer.product_id}.");
+                }
                 var cost = await productCommand.ExecuteScalarAsync();
                 if (cost is null or DBNull)
                 {
@@ -1235,8 +1326,20 @@ public sealed class BranchSyncDashboardForm : Form
                 productCost = Convert.ToDecimal(cost, CultureInfo.InvariantCulture);
             }
 
+            if (isStockTake)
+            {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Reading current POS balance for product {transfer.product_id}.");
+            }
             var currentBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
             var expectedBalance = isStockTake ? targetQuantity : currentBalance + quantity;
+            if (isStockTake)
+            {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] POS balance {currentBalance}; target {targetQuantity} for command {transfer.id}.");
+            }
+            if (isStockTake)
+            {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Requesting movement number for command {transfer.id}.");
+            }
             var invoiceNumber = await GetStockMovementInvoiceNumberAsync(connection, transaction, transfer.id, branchName, isStockTake);
             var today = int.Parse(DateTime.Today.ToString("yyyyMMdd", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
             var time = int.Parse(DateTime.Now.ToString("HHmm", CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
@@ -1248,7 +1351,8 @@ public sealed class BranchSyncDashboardForm : Form
             {
                 using var movementCommand = new SqlCommand("InsertNewStock", connection, transaction)
                 {
-                    CommandType = CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
                 };
                 movementCommand.Parameters.AddWithValue("@trandate", today);
                 movementCommand.Parameters.AddWithValue("@invoicenum", invoiceNumber);
@@ -1267,9 +1371,11 @@ public sealed class BranchSyncDashboardForm : Form
             }
             else if (targetQuantity < currentBalance)
             {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Executing stock-reduction movement procedure for command {transfer.id}.");
                 using var movementCommand = new SqlCommand("InsertNewSaleStockTake", connection, transaction)
                 {
-                    CommandType = CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
                 };
                 movementCommand.Parameters.AddWithValue("@trandate", today);
                 movementCommand.Parameters.AddWithValue("@invoicenum", invoiceNumber);
@@ -1287,15 +1393,18 @@ public sealed class BranchSyncDashboardForm : Form
                 movementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
                 movementCommand.Parameters.AddWithValue("@branch", branchName);
                 movementCommand.Parameters.AddWithValue("@details", commandMarker);
-                movementCommand.Parameters.AddWithValue("@stockbal", expectedBalance);
+                movementCommand.Parameters.AddWithValue("@stockbal", currentBalance);
                 movementCommand.Parameters.AddWithValue("@machinename", Environment.MachineName);
                 await movementCommand.ExecuteNonQueryAsync();
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
             else
             {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Executing stock-increase movement procedure for command {transfer.id}.");
                 using var movementCommand = new SqlCommand("InsertNewStockStockTake", connection, transaction)
                 {
-                    CommandType = CommandType.StoredProcedure
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
                 };
                 movementCommand.Parameters.AddWithValue("@trandate", today);
                 movementCommand.Parameters.AddWithValue("@invoicenum", invoiceNumber);
@@ -1310,17 +1419,20 @@ public sealed class BranchSyncDashboardForm : Form
                 movementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
                 movementCommand.Parameters.AddWithValue("@branch", branchName);
                 movementCommand.Parameters.AddWithValue("@details", commandMarker);
-                movementCommand.Parameters.AddWithValue("@stockbal", expectedBalance);
+                movementCommand.Parameters.AddWithValue("@stockbal", currentBalance);
                 movementCommand.Parameters.AddWithValue("@machinename", Environment.MachineName);
                 movementCommand.Parameters.AddWithValue("@trantime", DateTime.Now.ToString("HH:mm", CultureInfo.InvariantCulture));
                 await movementCommand.ExecuteNonQueryAsync();
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
 
-            using (var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
+            if (!isStockTake)
             {
-                CommandType = CommandType.StoredProcedure
-            })
-            {
+                using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
+                };
                 refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
                 refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
                 refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
@@ -1328,26 +1440,32 @@ public sealed class BranchSyncDashboardForm : Form
                 await refreshBalanceCommand.ExecuteNonQueryAsync();
             }
 
-            var actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
-            if (actualBalance != expectedBalance)
+            var actualBalance = expectedBalance;
+            if (!isStockTake)
             {
-                throw new InvalidOperationException($"Movement procedure produced stock balance {actualBalance}, but expected {expectedBalance}; the command was rolled back.");
+                actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
+                if (actualBalance != expectedBalance)
+                {
+                    throw new InvalidOperationException($"Movement procedure produced stock balance {actualBalance}, but expected {expectedBalance}; the command was rolled back.");
+                }
             }
 
-            const string updateMovementSql = @"
-                ;WITH NewMovement AS (
-                    SELECT TOP (1) *
-                    FROM [dbo].[Movement]
-                    WHERE InvoiceNum = @invoiceNum
-                      AND ProductID = @productId
-                      AND coid = @coid
-                      AND UPPER(LTRIM(RTRIM(CAST(Branch AS nvarchar(100))))) = UPPER(LTRIM(RTRIM(@branch)))
-                    ORDER BY EntryNo DESC
-                )
-                UPDATE NewMovement
-                SET OtherDetail = @commandMarker;";
-            using (var updateMovementCommand = new SqlCommand(updateMovementSql, connection, transaction))
+            if (!isStockTake)
             {
+                const string updateMovementSql = @"
+                    ;WITH NewMovement AS (
+                        SELECT TOP (1) *
+                        FROM [dbo].[Movement]
+                        WHERE InvoiceNum = @invoiceNum
+                          AND ProductID = @productId
+                          AND coid = @coid
+                          AND UPPER(LTRIM(RTRIM(CAST(Branch AS nvarchar(100))))) = UPPER(LTRIM(RTRIM(@branch)))
+                        ORDER BY EntryNo DESC
+                    )
+                    UPDATE NewMovement
+                    SET OtherDetail = @commandMarker;";
+                using var updateMovementCommand = new SqlCommand(updateMovementSql, connection, transaction);
+                updateMovementCommand.CommandTimeout = BranchSqlCommandTimeoutSeconds;
                 updateMovementCommand.Parameters.AddWithValue("@invoiceNum", invoiceNumber);
                 updateMovementCommand.Parameters.AddWithValue("@productId", transfer.product_id);
                 updateMovementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
@@ -1382,45 +1500,25 @@ public sealed class BranchSyncDashboardForm : Form
         int productId,
         string branchName)
     {
-        using (var movementCommand = new SqlCommand("ProductMovement", connection, transaction)
+        const string query = @"
+            SELECT COALESCE(SUM(StockBal), 0)
+            FROM [dbo].[ProductStockBalances]
+            WHERE ProductID = @productId
+                AND coid = @coid
+                AND branch = @branch;";
+        using (var balanceCommand = new SqlCommand(query, connection, transaction)
         {
-            CommandType = CommandType.StoredProcedure
+            CommandTimeout = BranchSqlCommandTimeoutSeconds
         })
         {
-            movementCommand.Parameters.AddWithValue("@startdate", 0);
-            movementCommand.Parameters.AddWithValue("@enddate", 99991231);
-            movementCommand.Parameters.AddWithValue("@productid", productId);
-            movementCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-            movementCommand.Parameters.AddWithValue("@isbatch", 0);
-            movementCommand.Parameters.AddWithValue("@branch", branchName);
-            movementCommand.Parameters.AddWithValue("@nobal", 0);
-
-            using var reader = await movementCommand.ExecuteReaderAsync();
-            if (reader.HasRows)
-            {
-                var entryNumberOrdinal = reader.GetOrdinal("Entry_No");
-                var stockBalanceOrdinal = reader.GetOrdinal("Stock_Balance");
-                var latestEntryNumber = int.MinValue;
-                decimal latestBalance = 0m;
-                while (await reader.ReadAsync())
-                {
-                    var entryNumber = Convert.ToInt32(reader.GetValue(entryNumberOrdinal), CultureInfo.InvariantCulture);
-                    if (entryNumber < latestEntryNumber)
-                    {
-                        continue;
-                    }
-
-                    latestEntryNumber = entryNumber;
-                    latestBalance = reader.IsDBNull(stockBalanceOrdinal)
-                        ? 0m
-                        : Convert.ToDecimal(reader.GetValue(stockBalanceOrdinal), CultureInfo.InvariantCulture);
-                }
-
-                return latestBalance;
-            }
+            balanceCommand.Parameters.AddWithValue("@productId", productId);
+            balanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+            balanceCommand.Parameters.AddWithValue("@branch", branchName);
+            var balance = await balanceCommand.ExecuteScalarAsync();
+            return balance is null or DBNull
+                ? 0m
+                : Convert.ToDecimal(balance, CultureInfo.InvariantCulture);
         }
-
-        return 0m;
     }
 
     private static async Task<int> GetStockMovementInvoiceNumberAsync(
@@ -1433,7 +1531,8 @@ public sealed class BranchSyncDashboardForm : Form
         var procedureName = isStockTake ? "GetNextStockTakeNumber" : "GetNewInvoiceNumber";
         using var command = new SqlCommand(procedureName, connection, transaction)
         {
-            CommandType = CommandType.StoredProcedure
+            CommandType = CommandType.StoredProcedure,
+            CommandTimeout = BranchSqlCommandTimeoutSeconds
         };
 
         if (isStockTake)
@@ -1545,14 +1644,20 @@ public sealed class BranchSyncDashboardForm : Form
                         ELSE MAX(ProductID) + 1
                     END
                     FROM [dbo].[Products] WITH (UPDLOCK, HOLDLOCK);";
-                using var nextProductIdCommand = new SqlCommand(nextProductIdSql, connection, transaction);
+                using var nextProductIdCommand = new SqlCommand(nextProductIdSql, connection, transaction)
+                {
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
+                };
                 actualProductId = Convert.ToInt32(await nextProductIdCommand.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
             }
 
             const string existingProductSql = "SELECT ProductDesc, BarCode FROM [dbo].[Products] WITH (UPDLOCK, HOLDLOCK) WHERE ProductID = @productId;";
             string? existingProductName = null;
             string? existingBarcode = null;
-            using (var existingProductCommand = new SqlCommand(existingProductSql, connection, transaction))
+            using (var existingProductCommand = new SqlCommand(existingProductSql, connection, transaction)
+            {
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            })
             {
                 existingProductCommand.Parameters.AddWithValue("@productId", actualProductId);
                 using var existingProductReader = await existingProductCommand.ExecuteReaderAsync();
@@ -1601,7 +1706,10 @@ public sealed class BranchSyncDashboardForm : Form
                     @branch,
                     NULL,
                     NULL);";
-            using var balanceCommand = new SqlCommand(insertBalanceSql, connection, transaction);
+            using var balanceCommand = new SqlCommand(insertBalanceSql, connection, transaction)
+            {
+                CommandTimeout = BranchSqlCommandTimeoutSeconds
+            };
             balanceCommand.Parameters.AddWithValue("@productId", actualProductId);
             balanceCommand.Parameters.AddWithValue("@initialQuantity", initialQuantity);
             balanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
@@ -1817,54 +1925,11 @@ public sealed class BranchSyncDashboardForm : Form
         {
             using var connection = new SqlConnection(_settings.BuildConnectionString());
             await connection.OpenAsync();
-            const string invoiceLinesSql = @"
-                SELECT
-                    m.ProductID,
-                    COALESCE(NULLIF(LTRIM(RTRIM(p.ProductDesc)), ''), CONCAT('Product ', m.ProductID)) AS ProductName,
-                    ABS(COALESCE(m.Quantity, 0)) AS Quantity,
-                    COALESCE(m.SellingPrice, 0) AS UnitPrice,
-                    ABS((COALESCE(m.Quantity, 0) * COALESCE(m.SellingPrice, 0)) - COALESCE(m.DiscountAmt, 0) - COALESCE(m.InvDiscount, 0) + COALESCE(m.TaxAmt, 0)) AS LineTotal
-                FROM [dbo].[Movement] AS m
-                LEFT JOIN [dbo].[Products] AS p ON p.ProductID = m.ProductID
-                WHERE (m.InvoiceNum = @invoiceNum OR CAST(m.InvoiceNum AS nvarchar(50)) = @invoiceNum)
-                  AND UPPER(CAST(m.Branch AS nvarchar(100))) = UPPER(@branch)
-                ORDER BY m.ProductID;";
-
-            var products = new List<string>();
-            decimal total = 0m;
-            using var command = new SqlCommand(invoiceLinesSql, connection);
-            command.Parameters.AddWithValue("@invoiceNum", reprint.invoice ?? string.Empty);
-            command.Parameters.AddWithValue("@branch", branchName);
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                var productName = reader[1]?.ToString()?.Trim() ?? string.Empty;
-                var quantity = Convert.ToDecimal(reader[2], CultureInfo.InvariantCulture);
-                var unitPrice = Convert.ToDecimal(reader[3], CultureInfo.InvariantCulture);
-                var lineTotal = Convert.ToDecimal(reader[4], CultureInfo.InvariantCulture);
-                products.Add($"{productName} x{quantity:0.##} @ {unitPrice:0.00} = {lineTotal:0.00}");
-                total += lineTotal;
-            }
-
-            if (products.Count == 0)
-            {
-                throw new InvalidOperationException($"No products found for invoice {reprint.invoice}.");
-            }
-
-            success = ReceiptPrinter.TryPrint(
+            (success, error) = await ReceiptPrinter.TryPrintInvoiceReprintAsync(
                 _settings.PrinterName,
-                "INVOICE REPRINT",
-                new List<(string Label, string Value)>
-                {
-                    ("Status", "REPRINTED"),
-                    ("Invoice", reprint.invoice ?? string.Empty),
-                    ("Branch", branchName),
-                    ("Products", string.Join(Environment.NewLine, products)),
-                    ("Total", total.ToString("0.00", CultureInfo.InvariantCulture)),
-                    ("Date", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
-                    ("Machine", Environment.MachineName)
-                },
-                out error);
+                _settings.BuildConnectionString(),
+                reprint.invoice ?? string.Empty,
+                branchName);
         }
         catch (Exception ex)
         {
@@ -1995,6 +2060,11 @@ public sealed class BranchSyncDashboardForm : Form
         public List<InvoiceReprintRequest>? pending_invoice_reprints { get; set; }
         public int count { get; set; }
         public string? message { get; set; }
+    }
+
+    private sealed class PendingStockTransfersResponse
+    {
+        public List<StockTransfer>? pending_transfers { get; set; }
     }
 
     private sealed class DeletionTrigger

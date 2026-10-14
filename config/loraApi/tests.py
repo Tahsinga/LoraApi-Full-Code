@@ -20,6 +20,12 @@ class ProductDeletionTests(TestCase):
 		ProductCatalog.objects.create(branch='BranchB', product_id=3001, product_name='Branch Product')
 		ProductCatalog.objects.create(branch='MAIN', product_id=3001, product_name='Branch Product')
 
+	def test_health_route_is_available_without_api_prefix(self):
+		response = self.client.get('/health/')
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['status'], 'ok')
+		self.assertEqual(response.json()['service'], 'Lora API Gateway')
+
 	def test_deletion_requires_the_current_users_password(self):
 		for password in ['', 'not-the-password']:
 			with self.subTest(password='missing' if not password else 'incorrect'):

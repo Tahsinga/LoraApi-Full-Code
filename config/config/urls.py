@@ -19,7 +19,7 @@ import logging
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
-from loraApi.views import bandwidth_usage, cancellation_history, deleted_products_page, favicon, index, main_stock, product_movement_history, user_management
+from loraApi.views import bandwidth_usage, cancellation_history, deleted_products_page, favicon, health_check, index, main_stock, product_movement_history, user_management
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,8 @@ class AuditLoginView(auth_views.LoginView):
 
 urlpatterns = [
     path('', index, name='dashboard'),
+    path('health', health_check, name='health_check_root'),
+    path('health/', health_check, name='health_check_root_slash'),
     path('stock/', main_stock, name='main_stock_page'),
     path('products/deleted/', deleted_products_page, name='deleted_products_page'),
     path('stock/movements/history/', product_movement_history, name='product_movement_history_page'),
