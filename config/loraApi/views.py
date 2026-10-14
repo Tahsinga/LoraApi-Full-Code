@@ -865,31 +865,65 @@ def stock_movements(request):
     local_day_start = datetime.combine(selected_date, datetime.min.time())
     day_start = timezone.make_aware(local_day_start + timedelta(minutes=timezone_offset))
     day_end = day_start + timedelta(days=1)
-    movements = StockMovement.objects.filter(
+    movement_records = list(StockMovement.objects.filter(
         branch__iexact=branch,
         created_at__gte=day_start,
         created_at__lt=day_end,
-    ).order_by('-created_at', '-id')[:20]
+    ).order_by('-created_at', '-id')[:2000])
+    movement_events = []
+    for movement in movement_records:
+        movement_events.append((movement.created_at, movement.id, {
+            'product_id': movement.product_id,
+            'product_name': movement.product_name,
+            'movement_type': (
+                'maintained' if movement.movement_type == 'adjusted' and movement.source == 'pos_stock_snapshot'
+                else 'stocktake' if movement.movement_type == 'adjusted' and '(stock take)' in movement.source.casefold()
+                else movement.movement_type
+            ),
+            'quantity': str(movement.quantity),
+            'source': {
+                'branch_sync': 'POS sales',
+                'pos_stock_snapshot': 'POS stock sync',
+            }.get(movement.source, movement.source or 'System'),
+            'created_at': movement.created_at.isoformat(),
+        }))
+
+    matched_movement_ids = set()
+    transfers = StockTransfer.objects.filter(
+        branch__iexact=branch,
+        status='completed',
+        target_quantity__isnull=True,
+        created_at__gte=day_start,
+        created_at__lt=day_end,
+    ).order_by('-created_at')[:2000]
+    for transfer in transfers:
+        expected_source = f'{transfer.created_by or "System"} (transfer to {transfer.branch})'
+        matching_movement = next((
+            movement for movement in movement_records
+            if movement.id not in matched_movement_ids
+            and movement.product_id == transfer.product_id
+            and movement.movement_type == 'received'
+            and movement.quantity == transfer.quantity
+            and movement.source == expected_source
+            and abs((movement.created_at - transfer.created_at).total_seconds()) <= 10
+        ), None)
+        if matching_movement is not None:
+            matched_movement_ids.add(matching_movement.id)
+            continue
+
+        movement_events.append((transfer.created_at, transfer.transfer_id, {
+            'product_id': transfer.product_id,
+            'product_name': transfer.product_name,
+            'movement_type': 'received',
+            'quantity': str(transfer.quantity),
+            'source': 'Stock transfer',
+            'created_at': transfer.created_at.isoformat(),
+        }))
+
+    movement_events.sort(key=lambda event: event[0], reverse=True)
     return JsonResponse({
         'status': 'ok',
-        'movements': [
-            {
-                'product_id': movement.product_id,
-                'product_name': movement.product_name,
-                'movement_type': (
-                    'maintained' if movement.movement_type == 'adjusted' and movement.source == 'pos_stock_snapshot'
-                    else 'stocktake' if movement.movement_type == 'adjusted' and '(stock take)' in movement.source.casefold()
-                    else movement.movement_type
-                ),
-                'quantity': str(movement.quantity),
-                'source': {
-                    'branch_sync': 'POS sales',
-                    'pos_stock_snapshot': 'POS stock sync',
-                }.get(movement.source, movement.source or 'System'),
-                'created_at': movement.created_at.isoformat(),
-            }
-            for movement in movements
-        ],
+        'movements': [event[2] for event in movement_events[:20]],
     })
 
 
@@ -1104,7 +1138,7 @@ def publish_branch_stock_snapshot(request):
             product_id = int(item.get('product_id'))
             product_name = str(item.get('product_name', '')).strip()
             quantity = Decimal(str(item.get('available_quantity')))
-            sold_quantity = Decimal(str(item.get('sold_quantity', 0) or 0)) if 'sold_quantity' in item else None
+            sold_quantity = abs(Decimal(str(item.get('sold_quantity', 0) or 0))) if 'sold_quantity' in item else None
             received_quantity = Decimal(str(item.get('received_quantity', 0) or 0)) if 'received_quantity' in item else None
             if product_id <= 0 or not product_name or quantity != whole_quantity(quantity):
                 raise ValueError
@@ -1146,7 +1180,7 @@ def publish_branch_stock_snapshot(request):
                 },
             )
             previous_movement_date = product.pos_movement_date
-            previous_sold_quantity = product.pos_sold_quantity
+            previous_sold_quantity = abs(product.pos_sold_quantity) if product.pos_sold_quantity is not None else None
             previous_received_quantity = product.pos_received_quantity
             previous_available_quantity = product.available_quantity
             quantity_changed = product.available_quantity != snapshot['available_quantity']

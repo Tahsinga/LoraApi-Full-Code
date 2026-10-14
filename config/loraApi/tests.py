@@ -823,6 +823,59 @@ class StockTransferTests(TestCase):
 			branch='BranchA', product_id=1005, movement_type='maintained',
 		).exists())
 
+	def test_pos_stock_snapshot_normalizes_signed_sales_counters(self):
+		from django.utils import timezone
+
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=1006, product_name='Signed POS Sale Product',
+			available_quantity=200, pos_movement_date=timezone.localdate(),
+			pos_sold_quantity=-300, pos_received_quantity=0,
+		)
+		response = self.client.post(
+			'/api/stock/snapshot/',
+			data=json.dumps({'branch': 'BranchA', 'products': [{
+				'product_id': 1006, 'product_name': 'Signed POS Sale Product',
+				'available_quantity': 100, 'sold_quantity': -400, 'received_quantity': 0,
+			}], 'movement_date': timezone.localdate().isoformat()}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(StockMovement.objects.get(
+			branch='BranchA', product_id=1006, source='POS sales',
+		).quantity, 100)
+		self.assertEqual(ProductCatalog.objects.get(product_id=1006).pos_sold_quantity, 400)
+
+	def test_stock_activity_includes_completed_transfers_without_duplicate_movements(self):
+		from django.utils import timezone
+
+		legacy_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_ACTIVITY_LEGACY', branch='BranchA', product_id=1007,
+			product_name='Legacy transfer product', quantity=4, status='completed',
+			created_by='admin', completed_at=timezone.now(),
+		)
+		paired_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_ACTIVITY_PAIRED', branch='BranchA', product_id=1008,
+			product_name='Paired transfer product', quantity=6, status='completed',
+			created_by='admin', completed_at=timezone.now(),
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=1008, product_name='Paired transfer product',
+			movement_type='received', quantity=6,
+			source='admin (transfer to BranchA)',
+		)
+
+		response = self.client.get('/api/stock/movements/', {
+			'branch': 'BranchA', 'date': timezone.localdate().isoformat(),
+		})
+		movements = response.json()['movements']
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(sum(item['product_id'] == legacy_transfer.product_id for item in movements), 1)
+		self.assertEqual(sum(item['product_id'] == paired_transfer.product_id for item in movements), 1)
+		legacy_event = next(item for item in movements if item['product_id'] == legacy_transfer.product_id)
+		self.assertEqual(legacy_event['source'], 'Stock transfer')
+
 	def test_stock_page_highlights_products_with_negative_movement_balance(self):
 		response = self.client.get('/stock/')
 
