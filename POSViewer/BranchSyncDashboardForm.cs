@@ -1472,16 +1472,19 @@ public sealed class BranchSyncDashboardForm : Form
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Quantum stock movement procedure completed for command {transfer.id}.");
             }
 
-            using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
+            if (isStockTake)
             {
-                CommandType = CommandType.StoredProcedure,
-                CommandTimeout = BranchSqlCommandTimeoutSeconds
-            };
-            refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-            refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
-            refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
-            refreshBalanceCommand.Parameters.AddWithValue("@productid", transfer.product_id);
-            await refreshBalanceCommand.ExecuteNonQueryAsync();
+                using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = BranchSqlCommandTimeoutSeconds
+                };
+                refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+                refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
+                refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
+                refreshBalanceCommand.Parameters.AddWithValue("@productid", transfer.product_id);
+                await refreshBalanceCommand.ExecuteNonQueryAsync();
+            }
 
             var actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
             var balanceDelta = Math.Abs(actualBalance - expectedBalance);
