@@ -226,21 +226,21 @@ class StockTransferTests(TestCase):
 		)
 
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual(response.json()['queued'], 2)
+		self.assertEqual(response.json()['queued'], 3)
 		self.assertEqual(response.json()['skipped_pending'], 1)
-		self.assertEqual(response.json()['skipped_negative'], 1)
+		self.assertEqual(response.json()['negative_zeroed'], 1)
 		batch_id = response.json()['batch_id']
 		queued = StockTransfer.objects.filter(branch='BranchA', target_quantity__isnull=False).exclude(product_id=1003)
 		self.assertEqual(
 			list(queued.order_by('product_id').values_list('product_id', 'quantity', 'target_quantity')),
-			[(1001, 2, 2), (1002, 0, 0)],
+			[(1001, 2, 2), (1002, 0, 0), (1004, 0, 0)],
 		)
 		self.assertFalse(MainStockBalance.objects.filter(product_id__in=[1001, 1002, 1003, 1004]).exists())
 		self.assertFalse(StockMovement.objects.exists())
 		progress = self.client.get(f'/api/stock/branch/stocktake-batches/{batch_id}/')
 		self.assertEqual(progress.status_code, 200)
-		self.assertEqual(progress.json()['counts']['pending'], 2)
-		self.assertEqual(progress.json()['total'], 2)
+		self.assertEqual(progress.json()['counts']['pending'], 3)
+		self.assertEqual(progress.json()['total'], 3)
 
 	def test_branch_stocktake_all_requires_a_branch(self):
 		response = self.client.post(

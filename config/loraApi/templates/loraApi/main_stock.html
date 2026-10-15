@@ -346,7 +346,7 @@
   const branchStocktakeCancelAll = document.querySelector('#stocktake-cancel-all');
   let currentStocktakeBatchId = '';
   let currentStocktakeProducts = [];
-  let currentStocktakeSkipped = {pending: 0, negative: 0};
+  let currentStocktakeSkipped = {pending: 0, negativeZeroed: 0};
   let stocktakePollingTimer = null;
   let stocktakeProgressLoading = false;
   let stocktakeBatchRunning = false;
@@ -602,7 +602,7 @@
     currentStocktakeProducts = data.products || [];
     const skipped = [];
     if (currentStocktakeSkipped.pending) skipped.push(`${currentStocktakeSkipped.pending} already pending`);
-    if (currentStocktakeSkipped.negative) skipped.push(`${currentStocktakeSkipped.negative} negative quantities skipped`);
+    if (currentStocktakeSkipped.negativeZeroed) skipped.push(`${currentStocktakeSkipped.negativeZeroed} negative quantities set to zero`);
     const skipText = skipped.length ? ` ${skipped.join('; ')}.` : '';
     branchStocktakeSummary.textContent = `${counts.completed || 0} done; ${counts.in_progress || 0} in progress; ${counts.pending || 0} pending; ${counts.failed || 0} failed; ${counts.cancelled || 0} cancelled.${skipText}`;
     branchStocktakeCancelAll.disabled = (counts.pending || 0) === 0;
@@ -662,7 +662,7 @@
       if (!response.ok) throw new Error(data.message || 'Branch stocktakes could not be queued.');
       currentStocktakeBatchId = data.batch_id;
       stocktakeBatchRunning = data.queued > 0;
-      currentStocktakeSkipped = {pending: data.skipped_pending || 0, negative: data.skipped_negative || 0};
+      currentStocktakeSkipped = {pending: data.skipped_pending || 0, negativeZeroed: data.negative_zeroed || 0};
       branchStocktakeBranch.textContent = branch;
       branchStocktakeFilter.value = '';
       currentStocktakeProducts = [];

@@ -711,7 +711,7 @@ def stocktake_branch_products(request):
     batch_id = uuid.uuid4().hex
     queued_transfers = []
     skipped_pending = 0
-    skipped_negative = 0
+    negative_zeroed = 0
     with transaction.atomic():
         products = list(ProductCatalog.objects.select_for_update().filter(
             branch__iexact=branch,
@@ -731,8 +731,8 @@ def stocktake_branch_products(request):
                 continue
             quantity = product.available_quantity
             if quantity < 0:
-                skipped_negative += 1
-                continue
+                quantity = Decimal('0')
+                negative_zeroed += 1
             queued_transfers.append(StockTransfer(
                 transfer_id=f'STOCKTAKE_BULK_{batch_id}_{product.product_id}',
                 branch=product.branch,
@@ -751,7 +751,7 @@ def stocktake_branch_products(request):
         'batch_id': batch_id,
         'queued': len(queued_transfers),
         'skipped_pending': skipped_pending,
-        'skipped_negative': skipped_negative,
+        'negative_zeroed': negative_zeroed,
     })
 
 
