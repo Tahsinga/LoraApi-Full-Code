@@ -118,6 +118,33 @@
     .product-delete-dialog .product-delete-actions { display:flex; justify-content:flex-end; gap:8px; }
     .product-delete-dialog .product-delete-actions button { width:auto; grid-column:auto; margin:0; padding:11px 14px; }
     .product-delete-dialog .product-delete-cancel { color:var(--ink); background:#e8eeea; }
+    .branch-stocktake-dialog { width:min(820px, calc(100% - 28px)); max-height:88vh; padding:22px; color:var(--ink); background:var(--white); border:1px solid var(--line); box-shadow:0 18px 60px rgba(0,0,0,.24); }
+    .branch-stocktake-dialog::backdrop { background:rgba(15,29,28,.58); }
+    .branch-stocktake-dialog h2, .branch-stocktake-dialog p { margin:0; }
+    .branch-stocktake-header, .branch-stocktake-actions, .stocktake-product-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .branch-stocktake-header { margin-bottom:8px; }
+    .branch-stocktake-summary { min-height:22px; margin-bottom:14px !important; color:var(--muted); font:13px/1.5 Arial,sans-serif; }
+    .branch-stocktake-counts { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:8px; margin-bottom:14px; }
+    .branch-stocktake-count { padding:9px 10px; background:#f3f7f4; border:1px solid var(--line); }
+    .branch-stocktake-count span { display:block; color:var(--muted); font:700 10px Arial,sans-serif; text-transform:uppercase; }
+    .branch-stocktake-count strong { display:block; margin-top:4px; font:600 20px Georgia,serif; }
+    .branch-stocktake-dialog .stocktake-search { margin-bottom:10px; }
+    .stocktake-product-list { max-height:42vh; overflow:auto; border:1px solid var(--line); }
+    .stocktake-product-row { min-height:58px; padding:9px 12px; border-bottom:1px solid var(--line); }
+    .stocktake-product-row:last-child { border-bottom:0; }
+    .stocktake-product-name { min-width:0; overflow-wrap:anywhere; font:600 14px Arial,sans-serif; }
+    .stocktake-product-detail { display:block; margin-top:4px; color:var(--muted); font:12px Arial,sans-serif; }
+    .stocktake-product-state { display:flex; flex:0 0 auto; align-items:center; gap:9px; }
+    .stocktake-state { color:var(--muted); font:700 10px Arial,sans-serif; text-transform:uppercase; }
+    .stocktake-state.state-completed { color:var(--teal-dark); }
+    .stocktake-state.state-in_progress { color:#9a5816; }
+    .stocktake-state.state-failed { color:#a53b2e; }
+    .stocktake-state.state-cancelled { color:#687675; }
+    .branch-stocktake-dialog button { width:auto; grid-column:auto; margin:0; padding:10px 13px; }
+    .branch-stocktake-dialog .stocktake-cancel-product { padding:7px 9px; background:#9c352b; }
+    .branch-stocktake-dialog .stocktake-cancel-product:hover { background:#76271f; }
+    .branch-stocktake-actions { justify-content:flex-end; margin-top:14px; }
+    .branch-stocktake-close { color:var(--ink); background:#e8eeea; }
     .empty { margin:0; padding:18px 0 4px; color:var(--muted); font:14px Arial,sans-serif; }
     .movement-table { width:100%; border-collapse:collapse; min-width:620px; }
     .movement-table th { padding:11px 13px; color:var(--muted); border-bottom:1px solid var(--line); text-align:left; font:700 10px Arial,sans-serif; letter-spacing:.8px; text-transform:uppercase; }
@@ -178,6 +205,10 @@
       .stock-table th, .stock-table td, .movement-table th, .movement-table td, .transfer-table th, .transfer-table td { padding:10px 9px; }
       .stock-table .product-name { font-size:14px; }
       .section-jump-button { right:12px; bottom:12px; }
+      .branch-stocktake-dialog { padding:16px; }
+      .branch-stocktake-counts { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+      .stocktake-product-row { align-items:flex-start; }
+      .stocktake-product-state { flex-direction:column; align-items:flex-end; }
     }
   </style>
 </head>
@@ -213,6 +244,7 @@
           <div class="branch-load-actions">
             <button id="load-stock-button" class="load-stock-button" type="button">Load stock</button>
             <button id="refresh-stock-button" class="refresh-stock-button" type="button">Refresh figures</button>
+            <button id="branch-stocktake-button" type="button" disabled>Stocktake all products</button>
           </div>
         </div>
         <p class="sub">Filter and select a Main POS product, then enter the quantity to send.</p>
@@ -274,12 +306,27 @@
         <p id="product-delete-status" class="notice" role="status"></p>
       </form>
     </dialog>
+    <dialog id="branch-stocktake-dialog" class="branch-stocktake-dialog" aria-labelledby="branch-stocktake-title">
+      <div class="branch-stocktake-header"><h2 id="branch-stocktake-title">Branch stocktake progress</h2><span id="branch-stocktake-branch" class="catalog-status"></span></div>
+      <p id="branch-stocktake-summary" class="branch-stocktake-summary" role="status" aria-live="polite">Preparing stocktakes...</p>
+      <div class="branch-stocktake-counts" aria-label="Stocktake product counts">
+        <div class="branch-stocktake-count"><span>Done</span><strong id="stocktake-done-count">0</strong></div>
+        <div class="branch-stocktake-count"><span>In progress</span><strong id="stocktake-progress-count">0</strong></div>
+        <div class="branch-stocktake-count"><span>Pending</span><strong id="stocktake-pending-count">0</strong></div>
+        <div class="branch-stocktake-count"><span>Failed</span><strong id="stocktake-failed-count">0</strong></div>
+        <div class="branch-stocktake-count"><span>Cancelled</span><strong id="stocktake-cancelled-count">0</strong></div>
+      </div>
+      <label class="stocktake-search">Filter products<input id="stocktake-product-filter" type="search" placeholder="Search product name or ID"></label>
+      <div id="stocktake-product-list" class="stocktake-product-list" role="list"></div>
+      <div class="branch-stocktake-actions"><button id="stocktake-cancel-all" type="button">Cancel all pending</button><button id="stocktake-close" class="branch-stocktake-close" type="button">Close</button></div>
+    </dialog>
   </main>
 </div>
 <button id="section-jump-button" class="section-jump-button" type="button" aria-label="Go to stock activity">Stock activity</button>
 <script>
   const selectedBranch = document.querySelector('#selected-branch');
   const loadStockButton = document.querySelector('#load-stock-button');
+  const branchStocktakeButton = document.querySelector('#branch-stocktake-button');
   const selectedBranchKey = 'lora-selected-branch';
   const productCatalogStatus = document.querySelector('#product-catalog-status');
   const refreshStockButton = document.querySelector('#refresh-stock-button');
@@ -291,6 +338,19 @@
   const productDeleteDescription = document.querySelector('#product-delete-description');
   const productDeleteStatus = document.querySelector('#product-delete-status');
   const productDeleteCancel = document.querySelector('#product-delete-cancel');
+  const branchStocktakeDialog = document.querySelector('#branch-stocktake-dialog');
+  const branchStocktakeBranch = document.querySelector('#branch-stocktake-branch');
+  const branchStocktakeSummary = document.querySelector('#branch-stocktake-summary');
+  const branchStocktakeFilter = document.querySelector('#stocktake-product-filter');
+  const branchStocktakeProductList = document.querySelector('#stocktake-product-list');
+  const branchStocktakeCancelAll = document.querySelector('#stocktake-cancel-all');
+  let currentStocktakeBatchId = '';
+  let currentStocktakeProducts = [];
+  let currentStocktakeSkipped = {pending: 0, negative: 0};
+  let stocktakePollingTimer = null;
+  let stocktakeProgressLoading = false;
+  let stocktakeBatchRunning = false;
+  let stocktakeProductRenderKey = '';
   let pendingProductDeletion = null;
   const stockMovements = document.querySelector('#stock-movements');
   const productsPanel = document.querySelector('#products-panel');
@@ -425,6 +485,7 @@
   async function loadBranchProducts(showLoading = true) {
     const requestId = ++branchProductsRequestId;
     const branch = selectedBranch.value;
+    branchStocktakeButton.disabled = true;
     if (showLoading) {
       branchProducts.innerHTML = '<p class="empty loading-state"><span class="loading-spinner" aria-hidden="true"></span>Loading products...</p>';
       setBranchCardsLoading(true);
@@ -445,6 +506,7 @@
       loadStockButton.disabled = false;
       loadStockButton.textContent = 'Load stock';
       loadStockButton.setAttribute('aria-busy', 'false');
+      branchStocktakeButton.disabled = true;
       return;
     }
     if (showLoading) productCatalogStatus.textContent = 'Loading products...';
@@ -489,9 +551,156 @@
       loadStockButton.disabled = false;
       loadStockButton.textContent = 'Load stock';
       loadStockButton.setAttribute('aria-busy', 'false');
+      branchStocktakeButton.disabled = !selectedBranch.value
+        || branchCatalogSinceBranch !== selectedBranch.value
+        || branchCatalogProducts.length === 0;
       if (showLoading) setBranchCardsLoading(false);
     }
   }
+  function updateBranchStocktakeButton() {
+    if (stocktakeBatchRunning) {
+      branchStocktakeButton.textContent = 'View stocktake progress';
+      branchStocktakeButton.disabled = false;
+      return;
+    }
+    branchStocktakeButton.textContent = 'Stocktake all products';
+    branchStocktakeButton.disabled = branchProductsLoading
+      || !selectedBranch.value
+      || branchCatalogSinceBranch !== selectedBranch.value
+      || branchCatalogProducts.length === 0;
+  }
+  function renderStocktakeProducts(force = false) {
+    const query = branchStocktakeFilter.value.trim().toLowerCase();
+    const products = currentStocktakeProducts.filter(product =>
+      [product.product_name, product.product_id].some(value => String(value ?? '').toLowerCase().includes(query)),
+    );
+    const renderKey = `${query}|${products.map(product => `${product.transfer_id}:${product.status}`).join('|')}`;
+    if (!force && renderKey === stocktakeProductRenderKey) return;
+    stocktakeProductRenderKey = renderKey;
+    branchStocktakeProductList.innerHTML = products.length
+      ? products.map(product => {
+        const labels = {completed:'Done', in_progress:'In progress', pending:'Pending', failed:'Failed', cancelled:'Cancelled'};
+        const status = labels[product.status] ? product.status : 'failed';
+        const cancelButton = product.can_cancel
+          ? `<button class="stocktake-cancel-product" type="button" data-stocktake-cancel="${escapeHtml(product.transfer_id)}" aria-label="Cancel stocktake for ${escapeHtml(product.product_name)}">Cancel</button>`
+          : '';
+        return `<div class="stocktake-product-row" role="listitem"><div class="stocktake-product-name">${escapeHtml(product.product_name)}<span class="stocktake-product-detail">ID ${escapeHtml(product.product_id)} · Target ${escapeHtml(product.quantity)}</span></div><div class="stocktake-product-state"><span class="stocktake-state state-${status}">${labels[status]}</span>${cancelButton}</div></div>`;
+      }).join('')
+      : '<p class="empty">No products match this filter.</p>';
+  }
+  function stopStocktakePolling() {
+    if (stocktakePollingTimer) clearInterval(stocktakePollingTimer);
+    stocktakePollingTimer = null;
+  }
+  function applyStocktakeProgress(data) {
+    const counts = data.counts || {};
+    document.querySelector('#stocktake-done-count').textContent = counts.completed || 0;
+    document.querySelector('#stocktake-progress-count').textContent = counts.in_progress || 0;
+    document.querySelector('#stocktake-pending-count').textContent = counts.pending || 0;
+    document.querySelector('#stocktake-failed-count').textContent = counts.failed || 0;
+    document.querySelector('#stocktake-cancelled-count').textContent = counts.cancelled || 0;
+    currentStocktakeProducts = data.products || [];
+    const skipped = [];
+    if (currentStocktakeSkipped.pending) skipped.push(`${currentStocktakeSkipped.pending} already pending`);
+    if (currentStocktakeSkipped.negative) skipped.push(`${currentStocktakeSkipped.negative} negative quantities skipped`);
+    const skipText = skipped.length ? ` ${skipped.join('; ')}.` : '';
+    branchStocktakeSummary.textContent = `${counts.completed || 0} done; ${counts.in_progress || 0} in progress; ${counts.pending || 0} pending; ${counts.failed || 0} failed; ${counts.cancelled || 0} cancelled.${skipText}`;
+    branchStocktakeCancelAll.disabled = (counts.pending || 0) === 0;
+    renderStocktakeProducts();
+    stocktakeBatchRunning = (counts.pending || 0) + (counts.in_progress || 0) > 0;
+    updateBranchStocktakeButton();
+    if (!stocktakeBatchRunning) stopStocktakePolling();
+  }
+  async function refreshStocktakeProgress() {
+    if (!currentStocktakeBatchId || stocktakeProgressLoading) return;
+    stocktakeProgressLoading = true;
+    try {
+      const response = await fetch(`/api/stock/branch/stocktake-batches/${encodeURIComponent(currentStocktakeBatchId)}/`, {cache:'no-store'});
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Stocktake progress is unavailable.');
+      applyStocktakeProgress(data);
+    } catch (error) {
+      branchStocktakeSummary.textContent = error.message;
+    } finally {
+      stocktakeProgressLoading = false;
+    }
+  }
+  async function cancelStocktake(transferId = '') {
+    if (!currentStocktakeBatchId) return;
+    branchStocktakeSummary.textContent = transferId ? 'Cancelling product stocktake...' : 'Cancelling pending stocktakes...';
+    const response = await fetch(`/api/stock/branch/stocktake-batches/${encodeURIComponent(currentStocktakeBatchId)}/`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(transferId ? {transfer_id: transferId} : {}),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || 'Stocktake cancellation failed.');
+    applyStocktakeProgress(data);
+  }
+  branchStocktakeButton.addEventListener('click', async () => {
+    if (stocktakeBatchRunning && currentStocktakeBatchId) {
+      if (!branchStocktakeDialog.open) branchStocktakeDialog.showModal();
+      await refreshStocktakeProgress();
+      return;
+    }
+    const branch = selectedBranch.value;
+    const productCount = branchCatalogProducts.length;
+    if (branchProductsLoading || !branch || branchCatalogSinceBranch !== branch || productCount === 0) return;
+    const confirmed = window.confirm(`Queue stocktakes for ${productCount} products at ${branch}, using each product's current branch quantity? This replaces both POS stock and movement values.`);
+    if (!confirmed) return;
+
+    branchStocktakeButton.disabled = true;
+    branchStocktakeButton.textContent = 'Queueing stocktakes...';
+    productCatalogStatus.textContent = 'Queueing branch stocktakes...';
+    try {
+      const response = await fetch('/api/stock/branch/stocktake-all/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({branch}),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Branch stocktakes could not be queued.');
+      currentStocktakeBatchId = data.batch_id;
+      stocktakeBatchRunning = data.queued > 0;
+      currentStocktakeSkipped = {pending: data.skipped_pending || 0, negative: data.skipped_negative || 0};
+      branchStocktakeBranch.textContent = branch;
+      branchStocktakeFilter.value = '';
+      currentStocktakeProducts = [];
+      stocktakeProductRenderKey = '';
+      if (!branchStocktakeDialog.open) branchStocktakeDialog.showModal();
+      await refreshStocktakeProgress();
+      stopStocktakePolling();
+      if (stocktakeBatchRunning) stocktakePollingTimer = setInterval(refreshStocktakeProgress, 2000);
+      productCatalogStatus.textContent = `Branch stocktakes are queued for ${branch}. The branch PC processes them one product at a time on sync.`;
+    } catch (error) {
+      productCatalogStatus.textContent = error.message;
+    } finally {
+      updateBranchStocktakeButton();
+    }
+  });
+  branchStocktakeFilter.addEventListener('input', () => renderStocktakeProducts(true));
+  branchStocktakeProductList.addEventListener('click', async event => {
+    const button = event.target.closest('[data-stocktake-cancel]');
+    if (!button) return;
+    button.disabled = true;
+    try {
+      await cancelStocktake(button.dataset.stocktakeCancel);
+    } catch (error) {
+      branchStocktakeSummary.textContent = error.message;
+      button.disabled = false;
+    }
+  });
+  branchStocktakeCancelAll.addEventListener('click', async () => {
+    if (!window.confirm('Cancel all stocktakes that have not started? A product already in progress cannot be interrupted.')) return;
+    branchStocktakeCancelAll.disabled = true;
+    try {
+      await cancelStocktake();
+    } catch (error) {
+      branchStocktakeSummary.textContent = error.message;
+      branchStocktakeCancelAll.disabled = false;
+    }
+  });
+  document.querySelector('#stocktake-close').addEventListener('click', () => branchStocktakeDialog.close());
   branchProducts.addEventListener('submit', async event => {
     const taxForm = event.target.closest('[data-product-tax-rate]');
     if (!taxForm) return;

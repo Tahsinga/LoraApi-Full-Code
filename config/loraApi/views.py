@@ -1,6 +1,7 @@
 import hashlib
 import json
 import time
+import uuid
 from contextlib import nullcontext
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -691,6 +692,139 @@ def adjust_main_stock(request):
             time.sleep(0.2 * (attempt + 1))
 
     return JsonResponse({'status': 'ok', 'product_id': product_id, 'branch': branch, 'quantity': str(quantity)})
+
+
+@login_required(login_url='/login/')
+@csrf_exempt
+def stocktake_branch_products(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Use POST method'}, status=405)
+
+    try:
+        payload = json.loads(request.body or '{}')
+        branch = str(payload.get('branch', '')).strip()
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+    if not branch:
+        return JsonResponse({'status': 'error', 'message': 'Branch is required.'}, status=400)
+
+    batch_id = uuid.uuid4().hex
+    queued_transfers = []
+    skipped_pending = 0
+    skipped_negative = 0
+    with transaction.atomic():
+        products = list(ProductCatalog.objects.select_for_update().filter(
+            branch__iexact=branch,
+            branch_confirmed=True,
+        ).order_by('product_id'))
+        product_ids = [product.product_id for product in products]
+        pending_product_ids = set(StockTransfer.objects.filter(
+            branch__iexact=branch,
+            product_id__in=product_ids,
+            target_quantity__isnull=False,
+            status__in=['pending', 'processing'],
+        ).values_list('product_id', flat=True))
+
+        for product in products:
+            if product.product_id in pending_product_ids:
+                skipped_pending += 1
+                continue
+            quantity = product.available_quantity
+            if quantity < 0:
+                skipped_negative += 1
+                continue
+            queued_transfers.append(StockTransfer(
+                transfer_id=f'STOCKTAKE_BULK_{batch_id}_{product.product_id}',
+                branch=product.branch,
+                product_id=product.product_id,
+                product_name=product.product_name,
+                quantity=quantity,
+                target_quantity=quantity,
+                created_by=request.user.get_username(),
+            ))
+
+        StockTransfer.objects.bulk_create(queued_transfers)
+
+    return JsonResponse({
+        'status': 'ok',
+        'branch': branch,
+        'batch_id': batch_id,
+        'queued': len(queued_transfers),
+        'skipped_pending': skipped_pending,
+        'skipped_negative': skipped_negative,
+    })
+
+
+@login_required(login_url='/login/')
+@csrf_exempt
+def stocktake_branch_batch(request, batch_id):
+    if request.method not in {'GET', 'POST'}:
+        return JsonResponse({'status': 'error', 'message': 'Use GET or POST method'}, status=405)
+    try:
+        batch_id = uuid.UUID(batch_id).hex
+    except ValueError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid stocktake batch.'}, status=400)
+
+    batch_prefix = f'STOCKTAKE_BULK_{batch_id}_'
+    batch_transfers = StockTransfer.objects.filter(
+        transfer_id__startswith=batch_prefix,
+        target_quantity__isnull=False,
+    )
+    cancelled_now = 0
+    if request.method == 'POST':
+        try:
+            payload = json.loads(request.body or '{}')
+            transfer_id = str(payload.get('transfer_id', '')).strip()
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
+        if transfer_id and not transfer_id.startswith(batch_prefix):
+            return JsonResponse({'status': 'error', 'message': 'Product does not belong to this stocktake batch.'}, status=400)
+        cancel_query = batch_transfers
+        if transfer_id:
+            cancel_query = cancel_query.filter(transfer_id=transfer_id)
+            if not cancel_query.exists():
+                return JsonResponse({'status': 'error', 'message': 'Stocktake product not found.'}, status=404)
+        cancelled_now = cancel_query.filter(
+            status='pending',
+            claimed_at__isnull=True,
+        ).update(status='cancelled')
+
+    transfers = list(batch_transfers.order_by('product_name', 'product_id'))
+    counts = {
+        'completed': 0,
+        'in_progress': 0,
+        'pending': 0,
+        'failed': 0,
+        'cancelled': 0,
+    }
+    products = []
+    for transfer in transfers:
+        if transfer.status == 'pending' and transfer.claimed_at:
+            status = 'in_progress'
+        elif transfer.status == 'processing':
+            status = 'in_progress'
+        elif transfer.status in counts:
+            status = transfer.status
+        else:
+            status = 'failed'
+        counts[status] += 1
+        products.append({
+            'transfer_id': transfer.transfer_id,
+            'product_id': transfer.product_id,
+            'product_name': transfer.product_name,
+            'quantity': str(transfer.target_quantity),
+            'status': status,
+            'can_cancel': status == 'pending',
+        })
+
+    return JsonResponse({
+        'status': 'ok',
+        'batch_id': batch_id,
+        'total': len(transfers),
+        'counts': counts,
+        'products': products,
+        'cancelled_now': cancelled_now,
+    })
 
 
 @csrf_exempt

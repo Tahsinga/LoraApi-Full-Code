@@ -91,6 +91,9 @@ class ProductDeletionTests(TestCase):
 		self.assertContains(response, 'Save tax')
 		self.assertContains(response, '/products/deleted/')
 		self.assertContains(response, 'offline or reconnecting; no transfer was sent.')
+		self.assertContains(response, 'Stocktake all products')
+		self.assertContains(response, 'stocktake-cancel-all')
+		self.assertContains(response, 'stocktake-product-list')
 
 
 class ProductTaxRateTests(TestCase):
@@ -204,6 +207,82 @@ class StockTransferTests(TestCase):
 			content_type='application/json',
 		)
 		self.assertEqual(StockMovement.objects.filter(product_id=999, branch='BranchA').count(), 1)
+
+	def test_branch_stocktake_all_queues_each_branch_balance_without_changing_main_stock(self):
+		ProductCatalog.objects.create(branch='BranchA', product_id=1001, product_name='Two in stock', available_quantity=2)
+		ProductCatalog.objects.create(branch='BranchA', product_id=1002, product_name='Out of stock', available_quantity=0)
+		ProductCatalog.objects.create(branch='BranchA', product_id=1003, product_name='Already queued', available_quantity=5)
+		ProductCatalog.objects.create(branch='BranchA', product_id=1004, product_name='Negative stock', available_quantity=-1)
+		ProductCatalog.objects.create(branch='BranchB', product_id=1005, product_name='Other branch', available_quantity=8)
+		StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_BranchA_1003_existing', branch='BranchA', product_id=1003,
+			product_name='Already queued', quantity=5, target_quantity=5,
+		)
+
+		response = self.client.post(
+			'/api/stock/branch/stocktake-all/',
+			data=json.dumps({'branch': 'BranchA'}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['queued'], 2)
+		self.assertEqual(response.json()['skipped_pending'], 1)
+		self.assertEqual(response.json()['skipped_negative'], 1)
+		batch_id = response.json()['batch_id']
+		queued = StockTransfer.objects.filter(branch='BranchA', target_quantity__isnull=False).exclude(product_id=1003)
+		self.assertEqual(
+			list(queued.order_by('product_id').values_list('product_id', 'quantity', 'target_quantity')),
+			[(1001, 2, 2), (1002, 0, 0)],
+		)
+		self.assertFalse(MainStockBalance.objects.filter(product_id__in=[1001, 1002, 1003, 1004]).exists())
+		self.assertFalse(StockMovement.objects.exists())
+		progress = self.client.get(f'/api/stock/branch/stocktake-batches/{batch_id}/')
+		self.assertEqual(progress.status_code, 200)
+		self.assertEqual(progress.json()['counts']['pending'], 2)
+		self.assertEqual(progress.json()['total'], 2)
+
+	def test_branch_stocktake_all_requires_a_branch(self):
+		response = self.client.post(
+			'/api/stock/branch/stocktake-all/',
+			data=json.dumps({}),
+			content_type='application/json',
+		)
+
+		self.assertEqual(response.status_code, 400)
+		self.assertEqual(response.json()['message'], 'Branch is required.')
+
+	def test_stocktake_batch_can_cancel_unclaimed_products_only(self):
+		ProductCatalog.objects.create(branch='BranchA', product_id=1101, product_name='First Product', available_quantity=2)
+		ProductCatalog.objects.create(branch='BranchA', product_id=1102, product_name='Second Product', available_quantity=3)
+		ProductCatalog.objects.create(branch='BranchA', product_id=1103, product_name='Claimed Product', available_quantity=4)
+		queue_response = self.client.post(
+			'/api/stock/branch/stocktake-all/',
+			data=json.dumps({'branch': 'BranchA'}),
+			content_type='application/json',
+		)
+		batch_id = queue_response.json()['batch_id']
+		batch_prefix = f'STOCKTAKE_BULK_{batch_id}_'
+		transfers = list(StockTransfer.objects.filter(transfer_id__startswith=batch_prefix).order_by('product_id'))
+		StockTransfer.objects.filter(pk=transfers[2].pk).update(claimed_at=timezone.now())
+		cancel_one_response = self.client.post(
+			f'/api/stock/branch/stocktake-batches/{batch_id}/',
+			data=json.dumps({'transfer_id': transfers[0].transfer_id}),
+			content_type='application/json',
+		)
+		self.assertEqual(cancel_one_response.status_code, 200)
+		self.assertEqual(cancel_one_response.json()['cancelled_now'], 1)
+
+		cancel_response = self.client.post(f'/api/stock/branch/stocktake-batches/{batch_id}/', data=json.dumps({}), content_type='application/json')
+
+		self.assertEqual(cancel_response.status_code, 200)
+		self.assertEqual(cancel_response.json()['cancelled_now'], 1)
+		self.assertEqual(cancel_response.json()['counts']['in_progress'], 1)
+		self.assertEqual(cancel_response.json()['counts']['cancelled'], 2)
+		self.assertEqual(cancel_response.json()['counts']['pending'], 0)
+		product_states = {product['product_id']: product for product in cancel_response.json()['products']}
+		self.assertFalse(product_states[transfers[2].product_id]['can_cancel'])
+		self.assertEqual(product_states[transfers[2].product_id]['status'], 'in_progress')
 
 	def test_stock_take_completion_does_not_duplicate_legacy_movement(self):
 		ProductCatalog.objects.create(
