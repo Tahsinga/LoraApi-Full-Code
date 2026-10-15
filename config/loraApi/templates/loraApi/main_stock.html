@@ -118,6 +118,13 @@
     .product-delete-dialog .product-delete-actions { display:flex; justify-content:flex-end; gap:8px; }
     .product-delete-dialog .product-delete-actions button { width:auto; grid-column:auto; margin:0; padding:11px 14px; }
     .product-delete-dialog .product-delete-cancel { color:var(--ink); background:#e8eeea; }
+    .movement-adjustment-dialog { width:min(500px, calc(100% - 28px)); padding:22px; color:var(--ink); background:var(--white); border:1px solid var(--line); border-radius:8px; box-shadow:0 18px 60px rgba(0,0,0,.24); }
+    .movement-adjustment-dialog::backdrop { background:rgba(15,29,28,.58); }
+    .movement-adjustment-dialog form { display:grid; grid-template-columns:1fr; gap:12px; margin:0; }
+    .movement-adjustment-dialog h2, .movement-adjustment-dialog p { margin:0; }
+    .movement-adjustment-dialog .movement-adjustment-actions { display:flex; justify-content:flex-end; gap:8px; }
+    .movement-adjustment-dialog .movement-adjustment-actions button { width:auto; grid-column:auto; margin:0; padding:11px 14px; }
+    .movement-adjustment-dialog .movement-adjustment-cancel { color:var(--ink); background:#e8eeea; }
     .branch-stocktake-dialog { width:min(820px, calc(100% - 28px)); max-height:88vh; padding:22px; color:var(--ink); background:var(--white); border:1px solid var(--line); border-radius:8px; box-shadow:0 18px 60px rgba(0,0,0,.24); }
     .branch-stocktake-dialog::backdrop { background:rgba(15,29,28,.58); }
     .branch-stocktake-dialog h2, .branch-stocktake-dialog p { margin:0; }
@@ -219,7 +226,7 @@
 <div class="shell">
   <header>
     <div class="page-title"><p class="eyebrow">Lora operations</p><h1>Main stock</h1></div>
-    <nav class="nav"><a class="nav-link" href="/products/deleted/">Deleted products</a><a class="nav-link" href="/stock/movements/history/">Product movements</a><a class="nav-link" href="/">Sale control</a><a class="nav-link" href="/history/">Cancellation history</a>{% if user.is_superuser %}<a class="nav-link" href="/users/">User accounts</a>{% endif %}<form method="post" action="/logout/" class="logout-form">{% csrf_token %}<button type="submit" class="logout-button">Sign out</button></form></nav>
+    <nav class="nav"><a class="nav-link" href="/products/deleted/">Deleted products</a><a class="nav-link" href="/stock/movements/history/">Product movements</a><a class="nav-link" href="/stock/movement-adjustments/">Movement adjustment history</a><a class="nav-link" href="/">Sale control</a><a class="nav-link" href="/history/">Cancellation history</a>{% if user.is_superuser %}<a class="nav-link" href="/users/">User accounts</a>{% endif %}<form method="post" action="/logout/" class="logout-form">{% csrf_token %}<button type="submit" class="logout-button">Sign out</button></form></nav>
   </header>
   <main>
     <p class="intro">Update central stock or send stock to a connected branch.</p>
@@ -235,7 +242,7 @@
           <button id="main-stock-submit" type="submit">Update main stock</button>
         </form>
         <div id="main-stock-notice" class="notice" role="status"></div>
-        <div id="main-stock-queue" class="transfer-queue" aria-live="polite" aria-label="Stock takes waiting to be updated"></div>
+        <div id="main-stock-queue" class="transfer-queue" aria-live="polite" aria-label="Movement adjustments waiting to be applied"></div>
       </div>
       <div class="panel transfer-panel branch-data-card" data-branch-loading-card>
         <div class="branch-load-row">
@@ -247,7 +254,7 @@
           <div class="branch-load-actions">
             <button id="load-stock-button" class="load-stock-button" type="button">Load stock</button>
             <button id="refresh-stock-button" class="refresh-stock-button" type="button">Refresh figures</button>
-            <button id="branch-stocktake-button" type="button" disabled>Stocktake all products</button>
+            <button id="branch-stocktake-button" type="button" disabled>Adjust all product movements</button>
           </div>
         </div>
         <p class="sub">Filter and select a Main POS product, then enter the quantity to send.</p>
@@ -309,10 +316,19 @@
         <p id="product-delete-status" class="notice" role="status"></p>
       </form>
     </dialog>
+    <dialog id="movement-adjustment-confirm-dialog" class="movement-adjustment-dialog" aria-labelledby="movement-adjustment-confirm-title">
+      <form id="movement-adjustment-confirm-form">
+        <h2 id="movement-adjustment-confirm-title">Confirm movement adjustment</h2>
+        <p id="movement-adjustment-confirm-description" class="sub"></p>
+        <label>Your login PIN / account password<input id="movement-adjustment-pin" type="password" autocomplete="current-password" required></label>
+        <div class="movement-adjustment-actions"><button id="movement-adjustment-cancel" class="movement-adjustment-cancel" type="button">Cancel</button><button id="movement-adjustment-submit" type="submit">Confirm adjustment</button></div>
+        <p id="movement-adjustment-confirm-status" class="notice" role="status"></p>
+      </form>
+    </dialog>
     <dialog id="branch-stocktake-dialog" class="branch-stocktake-dialog" aria-labelledby="branch-stocktake-title">
-      <div class="branch-stocktake-header"><h2 id="branch-stocktake-title">Branch stocktake progress</h2><span id="branch-stocktake-branch" class="catalog-status"></span></div>
-      <p id="branch-stocktake-summary" class="branch-stocktake-summary" role="status" aria-live="polite">Preparing stocktakes...</p>
-      <div class="branch-stocktake-counts" aria-label="Stocktake product counts">
+      <div class="branch-stocktake-header"><h2 id="branch-stocktake-title">Movement adjustment progress</h2><span id="branch-stocktake-branch" class="catalog-status"></span></div>
+      <p id="branch-stocktake-summary" class="branch-stocktake-summary" role="status" aria-live="polite">Preparing movement adjustments...</p>
+      <div class="branch-stocktake-counts" aria-label="Movement adjustment product counts">
         <div class="branch-stocktake-count"><span>Done</span><strong id="stocktake-done-count">0</strong></div>
         <div class="branch-stocktake-count"><span>In progress</span><strong id="stocktake-progress-count">0</strong></div>
         <div class="branch-stocktake-count"><span>Pending</span><strong id="stocktake-pending-count">0</strong></div>
@@ -341,6 +357,12 @@
   const productDeleteDescription = document.querySelector('#product-delete-description');
   const productDeleteStatus = document.querySelector('#product-delete-status');
   const productDeleteCancel = document.querySelector('#product-delete-cancel');
+  const movementAdjustmentConfirmDialog = document.querySelector('#movement-adjustment-confirm-dialog');
+  const movementAdjustmentConfirmForm = document.querySelector('#movement-adjustment-confirm-form');
+  const movementAdjustmentConfirmDescription = document.querySelector('#movement-adjustment-confirm-description');
+  const movementAdjustmentPin = document.querySelector('#movement-adjustment-pin');
+  const movementAdjustmentConfirmStatus = document.querySelector('#movement-adjustment-confirm-status');
+  const movementAdjustmentSubmit = document.querySelector('#movement-adjustment-submit');
   const branchStocktakeDialog = document.querySelector('#branch-stocktake-dialog');
   const branchStocktakeBranch = document.querySelector('#branch-stocktake-branch');
   const branchStocktakeSummary = document.querySelector('#branch-stocktake-summary');
@@ -350,6 +372,7 @@
   let currentStocktakeBatchId = '';
   let currentStocktakeProducts = [];
   let currentStocktakeSkipped = {pending: 0, negativeZeroed: 0};
+  let pendingMovementAdjustment = null;
   let stocktakePollingTimer = null;
   let stocktakeProgressLoading = false;
   let stocktakeBatchRunning = false;
@@ -562,11 +585,11 @@
   }
   function updateBranchStocktakeButton() {
     if (stocktakeBatchRunning) {
-      branchStocktakeButton.textContent = 'View stocktake progress';
+      branchStocktakeButton.textContent = 'View adjustment progress';
       branchStocktakeButton.disabled = false;
       return;
     }
-    branchStocktakeButton.textContent = 'Stocktake all products';
+    branchStocktakeButton.textContent = 'Adjust all product movements';
     branchStocktakeButton.disabled = branchProductsLoading
       || !selectedBranch.value
       || branchCatalogSinceBranch !== selectedBranch.value
@@ -585,7 +608,7 @@
         const labels = {completed:'Done', in_progress:'In progress', pending:'Pending', failed:'Failed', cancelled:'Cancelled'};
         const status = labels[product.status] ? product.status : 'failed';
         const cancelButton = product.can_cancel
-          ? `<button class="stocktake-cancel-product" type="button" data-stocktake-cancel="${escapeHtml(product.transfer_id)}" aria-label="Cancel stocktake for ${escapeHtml(product.product_name)}">Cancel</button>`
+          ? `<button class="stocktake-cancel-product" type="button" data-stocktake-cancel="${escapeHtml(product.transfer_id)}" aria-label="Cancel movement adjustment for ${escapeHtml(product.product_name)}">Cancel</button>`
           : '';
         return `<div class="stocktake-product-row" role="listitem"><div class="stocktake-product-name">${escapeHtml(product.product_name)}<span class="stocktake-product-detail">ID ${escapeHtml(product.product_id)} · Target ${escapeHtml(product.quantity)}</span></div><div class="stocktake-product-state"><span class="stocktake-state state-${status}">${labels[status]}</span>${cancelButton}</div></div>`;
       }).join('')
@@ -649,37 +672,58 @@
     const branch = selectedBranch.value;
     const productCount = branchCatalogProducts.length;
     if (branchProductsLoading || !branch || branchCatalogSinceBranch !== branch || productCount === 0) return;
-    const confirmed = window.confirm(`Queue stocktakes for ${productCount} products at ${branch}, using each product's current branch quantity? This replaces both POS stock and movement values.`);
-    if (!confirmed) return;
-
-    branchStocktakeButton.disabled = true;
-    branchStocktakeButton.textContent = 'Queueing stocktakes...';
-    productCatalogStatus.textContent = 'Queueing branch stocktakes...';
+    pendingMovementAdjustment = {branch, productCount};
+    movementAdjustmentConfirmDescription.textContent = `Adjust ${productCount} products at ${branch} using each product's current branch quantity? This replaces both POS stock and movement values.`;
+    movementAdjustmentPin.value = '';
+    movementAdjustmentConfirmStatus.textContent = '';
+    movementAdjustmentConfirmDialog.showModal();
+    movementAdjustmentPin.focus();
+  });
+  async function showMovementAdjustmentProgress(branch, data) {
+    currentStocktakeBatchId = data.batch_id;
+    stocktakeBatchRunning = data.queued > 0;
+    currentStocktakeSkipped = {pending: data.skipped_pending || 0, negativeZeroed: data.negative_zeroed || 0};
+    branchStocktakeBranch.textContent = branch;
+    branchStocktakeFilter.value = '';
+    currentStocktakeProducts = [];
+    stocktakeProductRenderKey = '';
+    if (!branchStocktakeDialog.open) branchStocktakeDialog.showModal();
+    await refreshStocktakeProgress();
+    stopStocktakePolling();
+    if (stocktakeBatchRunning) stocktakePollingTimer = setInterval(refreshStocktakeProgress, 2000);
+    productCatalogStatus.textContent = `Movement adjustments are queued for ${branch}. The branch PC processes them one product at a time on sync.`;
+  }
+  movementAdjustmentConfirmForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (!pendingMovementAdjustment) return;
+    movementAdjustmentSubmit.disabled = true;
+    movementAdjustmentConfirmStatus.textContent = 'Verifying PIN and queueing adjustments...';
     try {
       const response = await fetch('/api/stock/branch/stocktake-all/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({branch}),
+        body: JSON.stringify({branch: pendingMovementAdjustment.branch, pin: movementAdjustmentPin.value}),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || 'Branch stocktakes could not be queued.');
-      currentStocktakeBatchId = data.batch_id;
-      stocktakeBatchRunning = data.queued > 0;
-      currentStocktakeSkipped = {pending: data.skipped_pending || 0, negativeZeroed: data.negative_zeroed || 0};
-      branchStocktakeBranch.textContent = branch;
-      branchStocktakeFilter.value = '';
-      currentStocktakeProducts = [];
-      stocktakeProductRenderKey = '';
-      if (!branchStocktakeDialog.open) branchStocktakeDialog.showModal();
-      await refreshStocktakeProgress();
-      stopStocktakePolling();
-      if (stocktakeBatchRunning) stocktakePollingTimer = setInterval(refreshStocktakeProgress, 2000);
-      productCatalogStatus.textContent = `Branch stocktakes are queued for ${branch}. The branch PC processes them one product at a time on sync.`;
+      if (!response.ok) throw new Error(data.message || 'Movement adjustments could not be queued.');
+      const branch = pendingMovementAdjustment.branch;
+      pendingMovementAdjustment = null;
+      movementAdjustmentConfirmDialog.close();
+      movementAdjustmentPin.value = '';
+      await showMovementAdjustmentProgress(branch, data);
     } catch (error) {
-      productCatalogStatus.textContent = error.message;
+      movementAdjustmentConfirmStatus.textContent = error.message;
+      movementAdjustmentPin.value = '';
+      movementAdjustmentPin.focus();
     } finally {
+      movementAdjustmentSubmit.disabled = false;
       updateBranchStocktakeButton();
     }
+  });
+  document.querySelector('#movement-adjustment-cancel').addEventListener('click', () => {
+    pendingMovementAdjustment = null;
+    movementAdjustmentPin.value = '';
+    movementAdjustmentConfirmDialog.close();
   });
   branchStocktakeFilter.addEventListener('input', () => renderStocktakeProducts(true));
   branchStocktakeProductList.addEventListener('click', async event => {
@@ -809,7 +853,7 @@
       const movements = (data.movements || []).sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
       movementStatus.textContent = `${movements.length} movement${movements.length === 1 ? '' : 's'}`;
       stockMovements.innerHTML = movements.length
-        ? `<table class="movement-table"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Source</th><th>Date</th></tr></thead><tbody>${movements.map(movement => { const createdAt = new Date(movement.created_at); const labels = {received:'New stock',sold:'Sold',stocktake:'Stocktake',maintained:'Maintained',adjusted:'Adjusted'}; const movementType = String(movement.movement_type || 'adjusted').toLowerCase(); return `<tr><td>${escapeHtml(movement.product_name)}<small>ID ${escapeHtml(movement.product_id)}</small></td><td class="${escapeHtml(movementType)}">${escapeHtml(labels[movementType] || movementType)}</td><td>${escapeHtml(movement.quantity)}</td><td>${escapeHtml(movement.source)}</td><td><time datetime="${escapeHtml(movement.created_at)}">${escapeHtml(new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(createdAt))}</time></td></tr>`; }).join('')}</tbody></table>`
+        ? `<table class="movement-table"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Source</th><th>Date</th></tr></thead><tbody>${movements.map(movement => { const createdAt = new Date(movement.created_at); const labels = {received:'New stock',sold:'Sold',stocktake:'Movement adjustment',maintained:'Maintained',adjusted:'Adjusted'}; const movementType = String(movement.movement_type || 'adjusted').toLowerCase(); return `<tr><td>${escapeHtml(movement.product_name)}<small>ID ${escapeHtml(movement.product_id)}</small></td><td class="${escapeHtml(movementType)}">${escapeHtml(labels[movementType] || movementType)}</td><td>${escapeHtml(movement.quantity)}</td><td>${escapeHtml(movement.source)}</td><td><time datetime="${escapeHtml(movement.created_at)}">${escapeHtml(new Intl.DateTimeFormat(undefined, {dateStyle:'medium', timeStyle:'short'}).format(createdAt))}</time></td></tr>`; }).join('')}</tbody></table>`
         : '<p class="empty">No stock movements recorded yet.</p>';
     } catch (error) {
       if (error.name === 'AbortError' || requestId !== stockMovementsRequestId) return;

@@ -91,7 +91,10 @@ class ProductDeletionTests(TestCase):
 		self.assertContains(response, 'Save tax')
 		self.assertContains(response, '/products/deleted/')
 		self.assertContains(response, 'offline or reconnecting; no transfer was sent.')
-		self.assertContains(response, 'Stocktake all products')
+		self.assertContains(response, 'Adjust all product movements')
+		self.assertContains(response, 'movement-adjustment-confirm-dialog')
+		self.assertContains(response, 'Your login PIN / account password')
+		self.assertContains(response, '/stock/movement-adjustments/')
 		self.assertContains(response, 'stocktake-cancel-all')
 		self.assertContains(response, 'stocktake-product-list')
 
@@ -142,7 +145,7 @@ class StockTransferTests(TestCase):
 
 	def test_sign_out_works_from_each_page_with_csrf_enforced(self):
 		client = self.client_class(enforce_csrf_checks=True)
-		for page in ('/', '/stock/', '/history/', '/stock/movements/history/', '/users/'):
+		for page in ('/', '/stock/', '/history/', '/stock/movements/history/', '/stock/movement-adjustments/', '/users/'):
 			client.force_login(self.admin)
 			page_response = client.get(page)
 			self.assertEqual(page_response.status_code, 200, page)
@@ -221,7 +224,7 @@ class StockTransferTests(TestCase):
 
 		response = self.client.post(
 			'/api/stock/branch/stocktake-all/',
-			data=json.dumps({'branch': 'BranchA'}),
+			data=json.dumps({'branch': 'BranchA', 'pin': 'TransferPass4182!'}),
 			content_type='application/json',
 		)
 
@@ -245,12 +248,23 @@ class StockTransferTests(TestCase):
 	def test_branch_stocktake_all_requires_a_branch(self):
 		response = self.client.post(
 			'/api/stock/branch/stocktake-all/',
-			data=json.dumps({}),
+			data=json.dumps({'pin': 'TransferPass4182!'}),
 			content_type='application/json',
 		)
 
 		self.assertEqual(response.status_code, 400)
 		self.assertEqual(response.json()['message'], 'Branch is required.')
+
+	def test_branch_stocktake_all_requires_the_signed_in_users_pin(self):
+		for pin in ('', 'incorrect-pin'):
+			with self.subTest(pin='missing' if not pin else 'incorrect'):
+				response = self.client.post(
+					'/api/stock/branch/stocktake-all/',
+					data=json.dumps({'branch': 'BranchA', 'pin': pin}),
+					content_type='application/json',
+				)
+				self.assertEqual(response.status_code, 403)
+		self.assertFalse(StockTransfer.objects.exists())
 
 	def test_stocktake_batch_can_cancel_unclaimed_products_only(self):
 		ProductCatalog.objects.create(branch='BranchA', product_id=1101, product_name='First Product', available_quantity=2)
@@ -258,7 +272,7 @@ class StockTransferTests(TestCase):
 		ProductCatalog.objects.create(branch='BranchA', product_id=1103, product_name='Claimed Product', available_quantity=4)
 		queue_response = self.client.post(
 			'/api/stock/branch/stocktake-all/',
-			data=json.dumps({'branch': 'BranchA'}),
+			data=json.dumps({'branch': 'BranchA', 'pin': 'TransferPass4182!'}),
 			content_type='application/json',
 		)
 		batch_id = queue_response.json()['batch_id']
@@ -283,6 +297,38 @@ class StockTransferTests(TestCase):
 		product_states = {product['product_id']: product for product in cancel_response.json()['products']}
 		self.assertFalse(product_states[transfers[2].product_id]['can_cancel'])
 		self.assertEqual(product_states[transfers[2].product_id]['status'], 'in_progress')
+
+	def test_movement_adjustment_history_shows_actor_times_and_only_adjustments(self):
+		completed_at = timezone.now()
+		StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_BULK_AUDIT_COMPLETE', branch='BranchA', product_id=1201,
+			product_name='Audit Product', quantity=0, target_quantity=0, created_by='transfer-admin',
+			status='completed', completed_at=completed_at,
+		)
+		StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_BULK_AUDIT_PENDING', branch='BranchA', product_id=1202,
+			product_name='Pending Audit Product', quantity=5, target_quantity=5, created_by='transfer-admin',
+			status='pending', claimed_at=timezone.now(),
+		)
+		StockTransfer.objects.create(
+			transfer_id='TRANSFER_AUDIT_EXCLUDED', branch='BranchA', product_id=1203,
+			product_name='Regular Transfer', quantity=5, created_by='transfer-admin',
+		)
+
+		page = self.client.get('/stock/movement-adjustments/')
+		response = self.client.get('/api/stock/movement-adjustments/history/?branch=BranchA&q=transfer-admin')
+
+		self.assertEqual(page.status_code, 200)
+		self.assertContains(page, 'Movement adjustment history')
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual(response.json()['total'], 2)
+		adjustments = {row['product_id']: row for row in response.json()['adjustments']}
+		self.assertEqual(adjustments[1201]['created_by'], 'transfer-admin')
+		self.assertEqual(adjustments[1201]['quantity'], '0')
+		self.assertTrue(adjustments[1201]['created_at'])
+		self.assertEqual(adjustments[1201]['completed_at'], completed_at.isoformat())
+		self.assertEqual(adjustments[1201]['status'], 'completed')
+		self.assertEqual(adjustments[1202]['status'], 'in_progress')
 
 	def test_stock_take_completion_does_not_duplicate_legacy_movement(self):
 		ProductCatalog.objects.create(

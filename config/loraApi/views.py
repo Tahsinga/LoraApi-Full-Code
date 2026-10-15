@@ -311,6 +311,11 @@ def product_movement_history(request):
 
 
 @login_required(login_url='/login/')
+def movement_adjustments_page(request):
+    return render(request, 'loraApi/movement_adjustments.html')
+
+
+@login_required(login_url='/login/')
 def bandwidth_usage(request):
     """Show browser-local API response bandwidth totals."""
     return render(request, 'loraApi/bandwidth.html')
@@ -703,10 +708,13 @@ def stocktake_branch_products(request):
     try:
         payload = json.loads(request.body or '{}')
         branch = str(payload.get('branch', '')).strip()
+        pin = str(payload.get('pin', '')).strip()
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
     if not branch:
         return JsonResponse({'status': 'error', 'message': 'Branch is required.'}, status=400)
+    if not pin or not request.user.check_password(pin):
+        return JsonResponse({'status': 'error', 'message': 'Enter the correct PIN for your signed-in account.'}, status=403)
 
     batch_id = uuid.uuid4().hex
     queued_transfers = []
@@ -1177,6 +1185,71 @@ def stock_transfer_logs(request):
                 'completed_at': transfer.completed_at.isoformat() if transfer.completed_at else None,
             }
             for transfer in transfer_rows
+        ],
+    })
+
+
+@login_required(login_url='/login/')
+def movement_adjustment_history_api(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Use GET method'}, status=405)
+
+    branch = request.GET.get('branch', '').strip()
+    query_text = request.GET.get('q', '').strip()
+    from_date_text = request.GET.get('from', '').strip()
+    to_date_text = request.GET.get('to', '').strip()
+    from_date = parse_date(from_date_text) if from_date_text else None
+    to_date = parse_date(to_date_text) if to_date_text else None
+    if (from_date_text and from_date is None) or (to_date_text and to_date is None):
+        return JsonResponse({'status': 'error', 'message': 'Use valid dates.'}, status=400)
+    if from_date and to_date and from_date > to_date:
+        return JsonResponse({'status': 'error', 'message': 'The start date must be before the end date.'}, status=400)
+
+    adjustments = StockTransfer.objects.filter(
+        transfer_id__startswith='STOCKTAKE_',
+        target_quantity__isnull=False,
+    )
+    branches = list(adjustments.exclude(branch='').values_list('branch', flat=True).distinct().order_by('branch'))
+    if branch:
+        adjustments = adjustments.filter(branch__iexact=branch)
+    if query_text:
+        search_filter = (
+            Q(product_name__icontains=query_text)
+            | Q(branch__icontains=query_text)
+            | Q(created_by__icontains=query_text)
+            | Q(transfer_id__icontains=query_text)
+        )
+        if query_text.isdigit():
+            search_filter |= Q(product_id=int(query_text))
+        adjustments = adjustments.filter(search_filter)
+    if from_date:
+        start = timezone.make_aware(datetime.combine(from_date, datetime.min.time()))
+        adjustments = adjustments.filter(created_at__gte=start)
+    if to_date:
+        end = timezone.make_aware(datetime.combine(to_date + timedelta(days=1), datetime.min.time()))
+        adjustments = adjustments.filter(created_at__lt=end)
+
+    total = adjustments.count()
+    rows = list(adjustments.order_by('-created_at', '-transfer_id')[:1000])
+    return JsonResponse({
+        'status': 'ok',
+        'count': len(rows),
+        'total': total,
+        'truncated': total > len(rows),
+        'branches': branches,
+        'adjustments': [
+            {
+                'transfer_id': transfer.transfer_id,
+                'branch': transfer.branch,
+                'product_id': transfer.product_id,
+                'product_name': transfer.product_name,
+                'quantity': str(transfer.target_quantity),
+                'created_by': transfer.created_by or 'System',
+                'created_at': transfer.created_at.isoformat(),
+                'completed_at': transfer.completed_at.isoformat() if transfer.completed_at else None,
+                'status': 'in_progress' if transfer.status == 'processing' or (transfer.status == 'pending' and transfer.claimed_at) else transfer.status,
+            }
+            for transfer in rows
         ],
     })
 
