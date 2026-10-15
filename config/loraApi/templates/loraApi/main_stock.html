@@ -9,15 +9,18 @@
     * { box-sizing:border-box; }
     body { margin:0; color:var(--ink); background:var(--paper); font-family:Georgia, 'Times New Roman', serif; }
     .shell { min-height:100vh; background:radial-gradient(circle at 90% 0, #dceee7 0, transparent 34%), linear-gradient(135deg, #f8faf7 0, #edf3ef 100%); }
-    header { display:flex; justify-content:space-between; align-items:end; gap:24px; max-width:980px; margin:auto; padding:42px 28px 30px; }
+    header { display:flex; justify-content:space-between; align-items:center; gap:24px; max-width:1416px; margin:auto; padding:26px 28px 20px; border-bottom:1px solid rgba(201,221,213,.8); }
     .page-title { flex-shrink:0; }
-    .eyebrow { margin:0 0 8px; color:var(--teal); font:700 12px/1.2 Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
-    h1 { margin:0; font-size:clamp(34px, 5vw, 58px); line-height:.95; font-weight:500; white-space:nowrap; }
-    .nav { display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:flex-end; }
-    .nav-link, .logout-button { color:var(--teal-dark); font:700 12px Arial,sans-serif; letter-spacing:1px; text-decoration:none; text-transform:uppercase; }
+    .eyebrow { margin:0 0 7px; color:var(--teal); font:700 10px/1.2 Arial,sans-serif; letter-spacing:1.5px; text-transform:uppercase; }
+    h1 { margin:0; font-size:36px; line-height:1; font-weight:500; white-space:nowrap; }
+    .nav { display:flex; align-items:center; gap:3px; flex-wrap:wrap; justify-content:flex-end; padding:5px; background:rgba(231,242,238,.86); border:1px solid #d6e6e0; border-radius:7px; }
+    .nav-link { padding:9px 10px; color:var(--teal-dark); border-radius:4px; font:700 10px Arial,sans-serif; text-decoration:none; text-transform:uppercase; white-space:nowrap; }
+    .nav-link[aria-current="page"] { color:#fff; background:var(--teal); }
+    .nav-link[aria-current="page"]:hover { color:#fff; background:var(--teal-dark); }
     .logout-form { display:inline; margin:0; }
-    .logout-button { padding:0; background:none; border:0; cursor:pointer; }
-    .logout-button:hover, .nav-link:hover { color:var(--coral); }
+    .logout-button { padding:9px 10px; color:#9c352b; background:transparent; border:0; border-left:1px solid #c9ddd5; cursor:pointer; font:700 10px Arial,sans-serif; text-transform:uppercase; white-space:nowrap; }
+    .logout-button:hover { color:#76271f; background:#fbe9e6; }
+    .nav-link:not([aria-current="page"]):hover { color:var(--coral); background:#fff; }
     main { max-width:1416px; margin:auto; padding:0 28px 54px; }
     .intro { margin:0 0 22px; color:var(--muted); font:14px/1.5 Arial,sans-serif; }
     .workspace { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; }
@@ -187,10 +190,12 @@
     .section-jump-button:hover { background:var(--coral); }
     #products-panel, #stock-activity-panel { scroll-margin-top:24px; }
     @media (max-width:760px) {
-      header { display:block; padding:24px 14px 20px; }
-      h1 { font-size:40px; white-space:normal; }
-      .nav { justify-content:flex-start; gap:10px 14px; margin-top:18px; }
-      .nav-link, .logout-button { font-size:11px; }
+      header { display:grid; gap:16px; padding:21px 14px 15px; }
+      h1 { font-size:32px; white-space:normal; }
+      .nav { justify-content:flex-start; gap:3px; margin-top:0; }
+      .nav-link, .logout-button { font-size:9px; }
+      .nav-link { padding:9px 8px; }
+      .logout-button { padding:9px 8px; }
       main { padding:0 12px 32px; }
       .intro { font-size:13px; }
       .workspace { grid-template-columns:minmax(0, 1fr); gap:12px; }
@@ -226,7 +231,7 @@
 <div class="shell">
   <header>
     <div class="page-title"><p class="eyebrow">Lora operations</p><h1>Main stock</h1></div>
-    <nav class="nav"><a class="nav-link" href="/products/deleted/">Deleted products</a><a class="nav-link" href="/stock/movements/history/">Product movements</a><a class="nav-link" href="/stock/movement-adjustments/">Movement adjustment history</a><a class="nav-link" href="/">Sale control</a><a class="nav-link" href="/history/">Cancellation history</a>{% if user.is_superuser %}<a class="nav-link" href="/users/">User accounts</a>{% endif %}<form method="post" action="/logout/" class="logout-form">{% csrf_token %}<button type="submit" class="logout-button">Sign out</button></form></nav>
+    <nav class="nav" aria-label="Main navigation"><a class="nav-link" href="/stock/" aria-current="page">Main stock</a><a class="nav-link" href="/stock/movement-adjustments/">Movement adjustments</a><a class="nav-link" href="/stock/movements/history/">Product movements</a><a class="nav-link" href="/products/deleted/">Deleted products</a><a class="nav-link" href="/">Sale control</a><a class="nav-link" href="/history/">Cancellation history</a>{% if user.is_superuser %}<a class="nav-link" href="/users/">User accounts</a>{% endif %}<form method="post" action="/logout/" class="logout-form">{% csrf_token %}<button type="submit" class="logout-button">Sign out</button></form></nav>
   </header>
   <main>
     <p class="intro">Update central stock or send stock to a connected branch.</p>
