@@ -471,6 +471,49 @@ class StockTransferTests(TestCase):
 		self.assertTrue(StockTransfer.objects.filter(pk=other_branch.pk).exists())
 		self.assertTrue(StockTransfer.objects.filter(pk=completed.pk).exists())
 
+	def test_admin_can_delete_selected_failed_yeukai_commands_only(self):
+		failed_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_YEUKAI_FAILED_TEST', branch='YEUKAI', product_id=4367,
+			product_name='CAPTAIN GINGER', quantity=240, status='failed',
+		)
+		failed_stocktake = StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_YEUKAI_FAILED_TEST', branch='YEUKAI', product_id=4075,
+			product_name='HONEYPOT MAHEU', quantity=100, target_quantity=100, status='failed',
+		)
+		pending = StockTransfer.objects.create(
+			transfer_id='TRANSFER_YEUKAI_PENDING_KEEP', branch='YEUKAI', product_id=4588,
+			product_name='GAMBUKAMBU', quantity=60,
+		)
+		completed = StockTransfer.objects.create(
+			transfer_id='TRANSFER_YEUKAI_COMPLETED_KEEP', branch='YEUKAI', product_id=4367,
+			product_name='CAPTAIN GINGER', quantity=240, status='completed',
+		)
+		other_branch = StockTransfer.objects.create(
+			transfer_id='TRANSFER_OTHER_FAILED_KEEP', branch='BranchA', product_id=4367,
+			product_name='CAPTAIN GINGER', quantity=240, status='failed',
+		)
+		admin_url = '/admin/loraApi/stocktransfer/'
+		post_data = {
+			'action': 'delete_failed_yeukai_commands',
+			'index': '0',
+			'_selected_action': [
+				failed_transfer.pk, failed_stocktake.pk, pending.pk, completed.pk, other_branch.pk,
+			],
+		}
+
+		confirmation = self.client.post(admin_url, post_data)
+		self.assertEqual(confirmation.status_code, 200)
+		self.assertContains(confirmation, 'Are you sure')
+
+		post_data['post'] = 'yes'
+		response = self.client.post(admin_url, post_data)
+		self.assertEqual(response.status_code, 302)
+		self.assertFalse(StockTransfer.objects.filter(pk=failed_transfer.pk).exists())
+		self.assertFalse(StockTransfer.objects.filter(pk=failed_stocktake.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=pending.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=completed.pk).exists())
+		self.assertTrue(StockTransfer.objects.filter(pk=other_branch.pk).exists())
+
 	def test_direct_send_adds_quantity_to_main_and_branch(self):
 		MainStockBalance.objects.filter(product_id=999).update(quantity=150)
 		response = self.client.post(

@@ -20,6 +20,7 @@ class StockTransferAdmin(admin.ModelAdmin):
 		'delete_pending_mini_market_transfers',
 		'delete_pending_yeukai_transfers',
 		'delete_pending_yeukai_stocktakes',
+		'delete_failed_yeukai_commands',
 	)
 
 	def has_add_permission(self, request):
@@ -84,12 +85,31 @@ class StockTransferAdmin(admin.ModelAdmin):
 
 		return delete_selected(self, request, eligible)
 
+	@admin.action(
+		description='Delete selected failed YEUKAI commands',
+		permissions=['delete'],
+	)
+	def delete_failed_yeukai_commands(self, request, queryset):
+		if not request.user.is_superuser:
+			self.message_user(request, 'Only a superuser can remove transfer records.', messages.ERROR)
+			return None
+
+		eligible = queryset.filter(branch__iexact='YEUKAI', status='failed').filter(
+			Q(transfer_id__startswith='TRANSFER_')
+			| Q(transfer_id__startswith='STOCKTAKE_')
+		)
+		if not eligible.exists():
+			self.message_user(request, 'No failed YEUKAI commands were selected.', messages.WARNING)
+			return None
+
+		return delete_selected(self, request, eligible)
+
 	def delete_queryset(self, request, queryset):
 		if not request.user.is_superuser:
 			raise PermissionDenied
-		eligible = queryset.filter(status='pending').filter(
-			Q(branch__iexact='Mini Market')
-			| Q(branch__iexact='YEUKAI') & (
+		eligible = queryset.filter(
+			Q(branch__iexact='Mini Market', status='pending')
+			| Q(branch__iexact='YEUKAI', status__in=['pending', 'failed']) & (
 				Q(transfer_id__startswith='TRANSFER_')
 				| Q(transfer_id__startswith='STOCKTAKE_')
 			)
@@ -100,7 +120,7 @@ class StockTransferAdmin(admin.ModelAdmin):
 		is_pending_mini_market = obj.branch.casefold() == 'mini market' and obj.status == 'pending'
 		is_pending_yeukai_transfer = (
 			obj.branch.casefold() == 'yeukai'
-			and obj.status == 'pending'
+			and obj.status in ('pending', 'failed')
 			and obj.transfer_id.startswith(('TRANSFER_', 'STOCKTAKE_'))
 		)
 		if not request.user.is_superuser or not (is_pending_mini_market or is_pending_yeukai_transfer):
