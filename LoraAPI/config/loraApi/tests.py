@@ -1038,6 +1038,31 @@ class StockTransferTests(TestCase):
 		self.assertEqual(product['received_quantity'], '5')
 		self.assertEqual(product['sold_quantity'], '3')
 
+	def test_stock_summary_normalizes_negative_branch_movements(self):
+		ProductCatalog.objects.create(
+			branch='YEUKAI', product_id=1004, product_name='Signed movement product', available_quantity=1,
+		)
+		StockMovement.objects.create(
+			branch='YEUKAI', product_id=1004, product_name='Signed movement product',
+			movement_type='received', quantity=-5, source='branch sync',
+		)
+		StockMovement.objects.create(
+			branch='YEUKAI', product_id=1004, product_name='Signed movement product',
+			movement_type='adjusted', quantity=4, source='stock take',
+		)
+		StockMovement.objects.create(
+			branch='YEUKAI', product_id=1004, product_name='Signed movement product',
+			movement_type='sold', quantity=-3, source='branch sync',
+		)
+
+		response = self.client.get('/api/stock/summary/?branch=YEUKAI')
+
+		self.assertEqual(response.status_code, 200)
+		product = response.json()['products'][0]
+		self.assertEqual(product['received_quantity'], '5')
+		self.assertEqual(product['sold_quantity'], '3')
+		self.assertEqual(product['movement_balance'], '1')
+
 	def test_stock_summary_movement_balance_matches_running_movement_history(self):
 		ProductCatalog.objects.create(
 			branch='BranchA', product_id=1001, product_name='Negative movement product', available_quantity=4,
@@ -1085,8 +1110,8 @@ class StockTransferTests(TestCase):
 		from datetime import timedelta
 
 		older = StockMovement.objects.create(
-			branch='BranchA', product_id=1001, product_name='Older Product',
-			movement_type='received', quantity=1, source='sync',
+			branch='BranchA', product_id=1001, product_name='Older Product', movement_type='received', quantity=-1,
+			source='sync',
 		)
 		newer = StockMovement.objects.create(
 			branch='BranchA', product_id=1002, product_name='Newer Product',
@@ -1101,6 +1126,7 @@ class StockTransferTests(TestCase):
 		self.assertEqual(response.status_code, 200)
 		movements = response.json()['movements']
 		self.assertEqual([movement['product_id'] for movement in movements], [newer.product_id, older.product_id])
+		self.assertEqual(movements[1]['quantity'], '1')
 		self.assertTrue(movements[0]['created_at'])
 
 	def test_stock_movements_can_be_filtered_by_date(self):
@@ -1157,11 +1183,13 @@ class StockTransferTests(TestCase):
 
 		StockMovement.objects.create(
 			branch='BranchA', product_id=999, product_name='Test Product',
-			movement_type='sold', quantity=2, source='HP EliteBook',
+			movement_type='sold', quantity=-2, source='HP EliteBook',
 		)
 		sold_response = self.client.get('/api/stock/movements/history/?branch=BranchA&product=999&from=2020-01-01&to=2099-12-31')
 		sold_movement = next(item for item in sold_response.json()['movements'] if item['movement_type'] == 'sold')
 		self.assertEqual(sold_movement['source'], 'Sold')
+		self.assertEqual(sold_movement['quantity'], '2')
+		self.assertEqual(sold_movement['balance'], '10')
 
 	def test_product_movement_history_adjustment_sets_balance(self):
 		StockMovement.objects.create(

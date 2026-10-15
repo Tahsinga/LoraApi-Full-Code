@@ -14,7 +14,7 @@ from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
 from django.core.cache import cache
 from django.db import IntegrityError, OperationalError, ProgrammingError, close_old_connections, connection, transaction
 from django.db.models import Case, F, IntegerField, Max, OuterRef, Q, Subquery, Sum, When
-from django.db.models.functions import Cast
+from django.db.models.functions import Abs, Cast
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -234,18 +234,28 @@ def sum_quantities(queryset):
     return Decimal(queryset.aggregate(total=Sum(Cast('quantity', IntegerField())))['total'] or 0)
 
 
+def sum_movement_quantities(queryset):
+    return Decimal(queryset.aggregate(total=Sum(Abs(Cast('quantity', IntegerField()))))['total'] or 0)
+
+
+def movement_quantity(movement):
+    if movement.movement_type in ('received', 'sold'):
+        return abs(movement.quantity)
+    return movement.quantity
+
+
 def stock_summary_payload(product, branch):
     balance = MainStockBalance.objects.filter(product_id=product.product_id).first()
     today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
     tomorrow_start = today_start + timedelta(days=1)
-    received = sum_quantities(StockMovement.objects.filter(
+    received = sum_movement_quantities(StockMovement.objects.filter(
         product_id=product.product_id,
         branch__iexact=branch,
         movement_type='received',
         created_at__gte=today_start,
         created_at__lt=tomorrow_start,
     ))
-    sold = sum_quantities(StockMovement.objects.filter(
+    sold = sum_movement_quantities(StockMovement.objects.filter(
         product_id=product.product_id,
         branch__iexact=branch,
         movement_type='sold',
@@ -771,7 +781,8 @@ def stock_summary(request):
         product_id__in=product_ids,
         created_at__gte=today_start,
         created_at__lt=tomorrow_start,
-    ).values('product_id', 'movement_type').annotate(total=Sum(Cast('quantity', IntegerField())))
+        movement_type__in=['received', 'sold'],
+    ).values('product_id', 'movement_type').annotate(total=Sum(Abs(Cast('quantity', IntegerField()))))
     received_by_product = {}
     sold_by_product = {}
     for movement in movement_totals:
@@ -811,8 +822,8 @@ def stock_summary(request):
             | Q(created_at=F('latest_adjustment_at'), id__gt=F('latest_adjustment_id')),
         ).values('product_id').annotate(
             total=Sum(Case(
-                When(movement_type='received', then=Cast('quantity', IntegerField())),
-                When(movement_type='sold', then=-Cast('quantity', IntegerField())),
+                When(movement_type='received', then=Abs(Cast('quantity', IntegerField()))),
+                When(movement_type='sold', then=-Abs(Cast('quantity', IntegerField()))),
                 default=0,
                 output_field=IntegerField(),
             )),
@@ -867,7 +878,7 @@ def stock_movements(request):
                 'product_id': movement.product_id,
                 'product_name': movement.product_name,
                 'movement_type': movement.movement_type,
-                'quantity': str(movement.quantity),
+                'quantity': str(movement_quantity(movement)),
                 'source': 'Sold' if movement.movement_type == 'sold' else (movement.source or 'System'),
                 'created_at': movement.created_at.isoformat(),
             }
@@ -902,12 +913,13 @@ def product_movement_history_api(request):
     running_balances = {product_id: Decimal('0') for product_id in product_ids}
     movement_rows = []
     for movement in all_movements:
+        quantity = movement_quantity(movement)
         if movement.movement_type == 'adjusted':
-            running_balances[movement.product_id] = movement.quantity
+            running_balances[movement.product_id] = quantity
         elif movement.movement_type == 'sold':
-            running_balances[movement.product_id] -= movement.quantity
+            running_balances[movement.product_id] -= quantity
         else:
-            running_balances[movement.product_id] += movement.quantity
+            running_balances[movement.product_id] += quantity
         if from_date and movement.created_at.date().isoformat() < from_date:
             continue
         if to_date and movement.created_at.date().isoformat() > to_date:
@@ -916,7 +928,7 @@ def product_movement_history_api(request):
             'product_id': movement.product_id,
             'product_name': movement.product_name,
             'movement_type': movement.movement_type,
-            'quantity': str(movement.quantity),
+            'quantity': str(quantity),
             'balance': str(running_balances[movement.product_id]),
             'branch': movement.branch or 'Main stock',
             'source': 'Sold' if movement.movement_type == 'sold' else (movement.source or 'System'),
