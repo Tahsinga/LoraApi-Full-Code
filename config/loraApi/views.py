@@ -1109,16 +1109,31 @@ def product_movement_history_api(request):
         return JsonResponse({'status': 'error', 'message': 'Use GET method'}, status=405)
 
     product_query = str(request.GET.get('product', '')).strip()
+    product_id_value = str(request.GET.get('product_id', '')).strip()
     branch = str(request.GET.get('branch', '')).strip()
-    from_date = request.GET.get('from', '').strip()
-    to_date = request.GET.get('to', '').strip()
+    from_date_value = request.GET.get('from', '').strip()
+    to_date_value = request.GET.get('to', '').strip()
     if not branch:
         return JsonResponse({'status': 'error', 'message': 'Select a branch first.'}, status=400)
-    if not product_query:
+    if not product_query and not product_id_value:
         return JsonResponse({'status': 'error', 'message': 'Select a product first.'}, status=400)
+    try:
+        product_id = int(product_id_value) if product_id_value else None
+    except ValueError:
+        return JsonResponse({'status': 'error', 'message': 'Use a valid product ID.'}, status=400)
+    if product_id is not None and product_id <= 0:
+        return JsonResponse({'status': 'error', 'message': 'Use a valid product ID.'}, status=400)
+    from_date = parse_date(from_date_value) if from_date_value else None
+    to_date = parse_date(to_date_value) if to_date_value else None
+    if (from_date_value and from_date is None) or (to_date_value and to_date is None):
+        return JsonResponse({'status': 'error', 'message': 'Use valid dates.'}, status=400)
+    if from_date and to_date and from_date > to_date:
+        return JsonResponse({'status': 'error', 'message': 'The start date must be before the end date.'}, status=400)
 
     movements = StockMovement.objects.filter(branch__iexact=branch)
-    if product_query:
+    if product_id is not None:
+        movements = movements.filter(product_id=product_id)
+    elif product_query:
         product_filters = Q(product_name__icontains=product_query)
         if product_query.isdigit():
             product_filters |= Q(product_id=int(product_query))
@@ -1135,9 +1150,9 @@ def product_movement_history_api(request):
             running_balances[movement.product_id] -= movement.quantity
         else:
             running_balances[movement.product_id] += movement.quantity
-        if from_date and movement.created_at.date().isoformat() < from_date:
+        if from_date and movement.created_at.date() < from_date:
             continue
-        if to_date and movement.created_at.date().isoformat() > to_date:
+        if to_date and movement.created_at.date() > to_date:
             continue
         movement_rows.append({
             'product_id': movement.product_id,

@@ -1590,6 +1590,33 @@ class StockTransferTests(TestCase):
 		sold_movement = next(item for item in sold_response.json()['movements'] if item['movement_type'] == 'sold')
 		self.assertEqual(sold_movement['source'], 'Sold')
 
+	def test_product_movement_history_filters_exact_product_id(self):
+		StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Duplicate Product',
+			movement_type='received', quantity=4, source='selected product',
+		)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=1000, product_name='Duplicate Product',
+			movement_type='received', quantity=9, source='same name different product',
+		)
+
+		response = self.client.get('/api/stock/movements/history/', {
+			'branch': 'BranchA',
+			'product_id': 999,
+		})
+
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual([item['product_id'] for item in response.json()['movements']], [999])
+
+	def test_product_movement_history_rejects_invalid_date_range(self):
+		response = self.client.get('/api/stock/movements/history/', {
+			'branch': 'BranchA',
+			'product_id': 999,
+			'from': '2026-10-20',
+			'to': '2026-10-01',
+		})
+		self.assertEqual(response.status_code, 400)
+
 	def test_product_movement_history_adjustment_sets_balance(self):
 		StockMovement.objects.create(
 			branch='BranchA', product_id=999, product_name='Test Product',
