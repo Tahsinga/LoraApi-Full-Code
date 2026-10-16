@@ -108,6 +108,7 @@
     .stock-table button { margin:0; padding:8px 10px; font-size:10px; }
     .stock-table td:last-child { white-space:nowrap; }
     .stock-table td:last-child button { display:inline-flex; align-items:center; justify-content:center; width:auto; min-height:28px; grid-column:auto; margin:0; padding:5px 7px; font-size:9px; line-height:1.1; white-space:nowrap; }
+    .stock-table td:last-child button[data-product-movement] { margin-right:6px; }
     .stock-table td:last-child .delete-product-button { margin-left:4px; }
     .stock-table .delete-product-button { margin-left:6px; color:#fff; background:#9c352b; }
     .stock-table .delete-product-button:hover { background:#76271f; }
@@ -579,8 +580,10 @@
     selectedProductMovement = {product, branch:selectedBranch.value};
     productMovementTitle.textContent = product.product_name;
     productMovementSubtitle.textContent = `${selectedBranch.value} · Product ID ${product.product_id}`;
-    productMovementFrom.value = '';
-    productMovementTo.value = '';
+    const today = new Date();
+    const todayValue = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    productMovementFrom.value = todayValue;
+    productMovementTo.value = todayValue;
     productMovementDialog.showModal();
     void loadProductMovementHistory();
   }
