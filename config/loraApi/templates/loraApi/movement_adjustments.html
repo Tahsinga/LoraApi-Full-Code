@@ -73,6 +73,10 @@
   const searchInput = document.querySelector('#adjustment-search');
   const fromInput = document.querySelector('#from-date');
   const toInput = document.querySelector('#to-date');
+  const now = new Date();
+  const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+  fromInput.value = today;
+  toInput.value = today;
   const auditStatus = document.querySelector('#audit-status');
   const auditTable = document.querySelector('#audit-table');
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
