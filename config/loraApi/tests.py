@@ -1262,6 +1262,45 @@ class StockTransferTests(TestCase):
 		self.assertEqual(product['received_quantity'], '5')
 		self.assertEqual(product['sold_quantity'], '3')
 
+	def test_stock_summary_filters_sent_and_sold_by_selected_date(self):
+		selected_date = timezone.localdate() - timedelta(days=1)
+		ProductCatalog.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product', available_quantity=10,
+		)
+		old_sale = StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product',
+			movement_type='sold', quantity=4, source='historical sale',
+		)
+		selected_day_start = timezone.make_aware(datetime.combine(selected_date, datetime.min.time()))
+		StockMovement.objects.filter(pk=old_sale.pk).update(created_at=selected_day_start)
+		StockMovement.objects.create(
+			branch='BranchA', product_id=999, product_name='Test Product',
+			movement_type='sold', quantity=2, source='today sale',
+		)
+		old_transfer = StockTransfer.objects.create(
+			transfer_id='TRANSFER_SELECTED_DAY', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=7,
+		)
+		StockTransfer.objects.filter(pk=old_transfer.pk).update(created_at=selected_day_start)
+		StockTransfer.objects.create(
+			transfer_id='TRANSFER_TODAY', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=11,
+		)
+
+		response = self.client.get('/api/stock/summary/', {
+			'branch': 'BranchA',
+			'date': selected_date.isoformat(),
+		})
+
+		self.assertEqual(response.status_code, 200)
+		product = response.json()['products'][0]
+		self.assertEqual(product['sold_quantity'], '4')
+		self.assertEqual(product['sent_quantity'], '7')
+
+	def test_stock_summary_rejects_invalid_selected_date(self):
+		response = self.client.get('/api/stock/summary/?branch=BranchA&date=not-a-date')
+		self.assertEqual(response.status_code, 400)
+
 	def test_stock_summary_reports_negative_movement_balance_for_branch_products(self):
 		ProductCatalog.objects.create(
 			branch='BranchA', product_id=1001, product_name='Negative movement product', available_quantity=4,

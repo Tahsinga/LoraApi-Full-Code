@@ -299,7 +299,7 @@
       </div>
       </div>
       <div id="products-panel" class="panel panel-wide product-browser branch-data-card" data-branch-loading-card>
-        <div class="browser-heading"><div class="browser-actions"><span id="product-catalog-status" class="catalog-status">Select a branch to load products.</span></div></div>
+        <div class="browser-heading"><div><h2>Branch products</h2></div><div class="browser-actions"><label class="activity-date-label">Movement date<input id="product-movement-date" type="date"></label><span id="product-catalog-status" class="catalog-status">Select a branch to load products.</span></div></div>
         <label>Search products<input id="branch-product-search" type="search" placeholder="Search products by name, code, or barcode" autocomplete="off"></label>
         <div id="branch-products" class="stock-table-wrap"><p class="empty">Select a branch to see its products.</p></div>
       </div>
@@ -355,6 +355,7 @@
   const productCatalogStatus = document.querySelector('#product-catalog-status');
   const refreshStockButton = document.querySelector('#refresh-stock-button');
   const branchProductSearch = document.querySelector('#branch-product-search');
+  const productMovementDate = document.querySelector('#product-movement-date');
   const branchProducts = document.querySelector('#branch-products');
   const productDeleteDialog = document.querySelector('#product-delete-dialog');
   const productDeleteForm = document.querySelector('#product-delete-form');
@@ -542,7 +543,7 @@
     }
     if (showLoading) productCatalogStatus.textContent = 'Loading products...';
     try {
-      const params = new URLSearchParams({ branch });
+      const params = new URLSearchParams({ branch, date: productMovementDate.value });
       if (branchCatalogSince && branchCatalogSinceBranch === branch) params.set('since', branchCatalogSince);
       const response = await fetch(`/api/stock/summary/?${params}`, { cache: 'no-store', signal: AbortSignal.timeout(30000) });
       const data = await response.json().catch(() => ({}));
@@ -999,6 +1000,11 @@
     });
   }
   branchProductSearch.addEventListener('input', renderBranchProducts);
+  productMovementDate.addEventListener('change', () => {
+    branchCatalogSince = '';
+    branchCatalogSinceBranch = '';
+    loadBranchProducts(false);
+  });
   sectionJumpButton.addEventListener('click', () => {
     const target = document.querySelector(sectionJumpButton.dataset.target);
     target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1197,6 +1203,7 @@
   const today = new Date();
   activityDate.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   transferLogDate.value = activityDate.value;
+  productMovementDate.value = activityDate.value;
   document.addEventListener('click', event => {
     if (!event.target.closest('.product-picker')) productSearches.forEach(control => closePickerOptions(control.options));
   });

@@ -844,12 +844,18 @@ def stock_summary(request):
     if not branch:
         return JsonResponse({'status': 'error', 'message': 'Branch is required.'}, status=400)
 
+    selected_date_value = str(request.GET.get('date', '')).strip()
+    selected_date = parse_date(selected_date_value) if selected_date_value else timezone.localdate()
+    if selected_date is None:
+        return JsonResponse({'status': 'error', 'message': 'Use a valid date.'}, status=400)
+
     catalog = ProductCatalog.objects.filter(branch__iexact=branch, branch_confirmed=True)
     since = parse_datetime(str(request.GET.get('since', '')).strip())
     if since is not None and timezone.is_naive(since):
         since = timezone.make_aware(since, timezone.get_current_timezone())
+    selected_day_start = timezone.make_aware(datetime.combine(selected_date, datetime.min.time()))
+    selected_day_end = selected_day_start + timedelta(days=1)
     today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
-    tomorrow_start = today_start + timedelta(days=1)
     snapshot_time = timezone.now()
     full_snapshot = since is None or timezone.localtime(since).date() != today_start.date()
 
@@ -869,7 +875,7 @@ def stock_summary(request):
             branch__iexact=branch,
             product_id__in=catalog_product_ids,
             created_at__gte=changed_since,
-            created_at__lt=tomorrow_start,
+            created_at__lt=selected_day_end,
         ).values_list('product_id', flat=True))
         changed_product_ids.update(StockTransfer.objects.filter(
             branch__iexact=branch,
@@ -899,8 +905,8 @@ def stock_summary(request):
         branch__iexact=branch,
         product_id__in=product_ids,
         movement_type__in=['received', 'sold'],
-        created_at__gte=today_start,
-        created_at__lt=tomorrow_start,
+        created_at__gte=selected_day_start,
+        created_at__lt=selected_day_end,
     ).values('product_id', 'movement_type').annotate(total=Sum(Cast('quantity', IntegerField())))
     received_by_product = {}
     sold_by_product = {}
@@ -916,6 +922,8 @@ def stock_summary(request):
             product_id__in=product_ids,
             branch__iexact=branch,
             status__in=['pending', 'processing', 'completed'],
+            created_at__gte=selected_day_start,
+            created_at__lt=selected_day_end,
         ).values('product_id').annotate(total=Sum(Cast('quantity', IntegerField())))
     }
     latest_adjustments = StockMovement.objects.filter(
@@ -951,10 +959,9 @@ def stock_summary(request):
         ).values_list('product_id', 'total')
     )
     summary = []
-    summary_date = timezone.localdate()
     for product in products:
         movement_balance = latest_adjustment_by_product.get(product.product_id, 0) + movement_deltas.get(product.product_id, 0)
-        has_pos_daily_totals = product.pos_movement_date == summary_date
+        has_pos_daily_totals = product.pos_movement_date == selected_date
         summary.append({
             **product_payload(product),
             'main_quantity': str(balance_by_product.get(product.product_id, Decimal('0'))),
