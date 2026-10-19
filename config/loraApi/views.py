@@ -1246,7 +1246,12 @@ def whatsapp_stock_lookup(request):
 
     stock_timezone = ZoneInfo(settings.WHATSAPP_STOCK_TIME_ZONE)
     today = timezone.now().astimezone(stock_timezone).date()
-    day_start = datetime.combine(today, datetime.min.time(), tzinfo=stock_timezone)
+    selected_date_text = request.GET.get('date', '').strip()
+    selected_date = parse_date(selected_date_text) if selected_date_text else today
+    if selected_date is None:
+        return JsonResponse({'status': 'error', 'message': 'Use a valid transfer date in YYYY-MM-DD format.'}, status=400)
+
+    day_start = datetime.combine(selected_date, datetime.min.time(), tzinfo=stock_timezone)
     day_end = day_start + timedelta(days=1)
     transfers = StockTransfer.objects.filter(
         branch__iexact=branch,
@@ -1256,7 +1261,7 @@ def whatsapp_stock_lookup(request):
     return JsonResponse({
         'status': 'ok',
         'branch': branch,
-        'date': today.isoformat(),
+        'date': selected_date.isoformat(),
         'transfers': [
             {
                 'transfer_id': transfer.transfer_id,

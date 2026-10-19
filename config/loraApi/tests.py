@@ -205,6 +205,21 @@ class StockTransferTests(TestCase):
 		self.assertIn('sent_at', response.json()['transfers'][0])
 		self.assertNotIn('received_at', response.json()['transfers'][0])
 
+		yesterday = (timezone.localdate() - timedelta(days=1)).isoformat()
+		historical = self.client.get(
+			f'/api/whatsapp/stock/?branch=BranchA&date={yesterday}',
+			HTTP_X_WHATSAPP_TOKEN='test-whatsapp-token',
+		)
+		self.assertEqual(historical.status_code, 200)
+		self.assertEqual(historical.json()['date'], yesterday)
+		self.assertEqual([row['transfer_id'] for row in historical.json()['transfers']], ['WA_YESTERDAY'])
+
+		invalid_date = self.client.get(
+			'/api/whatsapp/stock/?branch=BranchA&date=not-a-date',
+			HTTP_X_WHATSAPP_TOKEN='test-whatsapp-token',
+		)
+		self.assertEqual(invalid_date.status_code, 400)
+
 	@override_settings(STORAGES={
 		'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
 		'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
