@@ -1,0 +1,3 @@
+[submodule "WhatsAppApi/WhatsappAPI"]
+	path = WhatsAppApi/WhatsappAPI
+	url = https://github.com/Tahsinga/WhatsappAPI.git

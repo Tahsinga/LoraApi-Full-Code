@@ -498,7 +498,7 @@ public sealed class BranchSyncDashboardForm : Form
                 }
             }
 
-            var added = 0;
+            var skipped = 0;
             var updated = 0;
             foreach (var product in products)
             {
@@ -507,91 +507,50 @@ public sealed class BranchSyncDashboardForm : Form
                     continue;
                 }
 
-                if (!productIds.Add(product.product_id))
+                if (!productIds.Contains(product.product_id))
                 {
-                    const string updateProductSql = @"
-                        UPDATE [dbo].[Products]
-                        SET ProductDesc = @productName, BarCode = @barcode, SellingPrice = @sellingPrice, TaxRate = @taxRate
-                        WHERE ProductID = @productId;";
-                    using (var productCommand = new SqlCommand(updateProductSql, connection))
-                    {
-                        productCommand.Parameters.AddWithValue("@productId", product.product_id);
-                        productCommand.Parameters.AddWithValue("@productName", product.product_name.Trim());
-                        productCommand.Parameters.AddWithValue("@barcode", product.barcode ?? string.Empty);
-                        productCommand.Parameters.AddWithValue("@sellingPrice", product.selling_price);
-                        productCommand.Parameters.AddWithValue("@taxRate", product.tax_rate);
-                        updated += await productCommand.ExecuteNonQueryAsync();
-                    }
-
-                    const string ensureZeroBalanceSql = @"
-                        IF NOT EXISTS (
-                            SELECT 1 FROM [dbo].[ProductStockBalances]
-                            WHERE ProductID = @productId AND branch = @branch
-                        )
-                        INSERT INTO [dbo].[ProductStockBalances]
-                            (ProductID, StockBal, MvtEntryNo, coid, branch, batchnumber, expirydate)
-                        VALUES (
-                            @productId, 0,
-                            ISNULL((SELECT MAX(MvtEntryNo) FROM [dbo].[ProductStockBalances] WHERE ProductID = @productId), 0) + 1,
-                            @coid, @branch, NULL, NULL
-                        );";
-                    using (var balanceCommand = new SqlCommand(ensureZeroBalanceSql, connection))
-                    {
-                        balanceCommand.Parameters.AddWithValue("@productId", product.product_id);
-                        balanceCommand.Parameters.AddWithValue("@branch", branchName);
-                        balanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-                        await balanceCommand.ExecuteNonQueryAsync();
-                    }
-
+                    skipped++;
                     continue;
                 }
 
-                using var transaction = connection.BeginTransaction();
-                try
+                const string updateProductSql = @"
+                    UPDATE [dbo].[Products]
+                    SET ProductDesc = @productName, BarCode = @barcode, SellingPrice = @sellingPrice, TaxRate = @taxRate
+                    WHERE ProductID = @productId;";
+                using (var productCommand = new SqlCommand(updateProductSql, connection))
                 {
-                    await InsertPosProductAsync(
-                        connection,
-                        transaction,
-                        product.product_id,
-                        product.product_name.Trim(),
-                        checked(product.product_id + 1).ToString(CultureInfo.InvariantCulture),
-                        product.barcode ?? string.Empty,
-                        product.selling_price,
-                        product.tax_rate);
-
-                    const string insertBalanceSql = @"
-                        IF NOT EXISTS (
-                            SELECT 1 FROM [dbo].[ProductStockBalances]
-                            WHERE ProductID = @productId AND branch = @branch
-                        )
-                        INSERT INTO [dbo].[ProductStockBalances]
-                            (ProductID, StockBal, MvtEntryNo, coid, branch, batchnumber, expirydate)
-                        VALUES (
-                            @productId, 0,
-                            ISNULL((SELECT MAX(MvtEntryNo) FROM [dbo].[ProductStockBalances] WHERE ProductID = @productId), 0) + 1,
-                            @coid, @branch, NULL, NULL
-                        );";
-                    using (var balanceCommand = new SqlCommand(insertBalanceSql, connection, transaction))
-                    {
-                        balanceCommand.Parameters.AddWithValue("@productId", product.product_id);
-                        balanceCommand.Parameters.AddWithValue("@branch", branchName);
-                        balanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-                        await balanceCommand.ExecuteNonQueryAsync();
-                    }
-
-                    transaction.Commit();
-                    added++;
+                    productCommand.Parameters.AddWithValue("@productId", product.product_id);
+                    productCommand.Parameters.AddWithValue("@productName", product.product_name.Trim());
+                    productCommand.Parameters.AddWithValue("@barcode", product.barcode ?? string.Empty);
+                    productCommand.Parameters.AddWithValue("@sellingPrice", product.selling_price);
+                    productCommand.Parameters.AddWithValue("@taxRate", product.tax_rate);
+                    updated += await productCommand.ExecuteNonQueryAsync();
                 }
-                catch
+
+                const string ensureZeroBalanceSql = @"
+                    IF NOT EXISTS (
+                        SELECT 1 FROM [dbo].[ProductStockBalances]
+                        WHERE ProductID = @productId AND branch = @branch
+                    )
+                    INSERT INTO [dbo].[ProductStockBalances]
+                        (ProductID, StockBal, MvtEntryNo, coid, branch, batchnumber, expirydate)
+                    VALUES (
+                        @productId, 0,
+                        ISNULL((SELECT MAX(MvtEntryNo) FROM [dbo].[ProductStockBalances] WHERE ProductID = @productId), 0) + 1,
+                        @coid, @branch, NULL, NULL
+                    );";
+                using (var balanceCommand = new SqlCommand(ensureZeroBalanceSql, connection))
                 {
-                    try { transaction.Rollback(); } catch { }
-                    throw;
+                    balanceCommand.Parameters.AddWithValue("@productId", product.product_id);
+                    balanceCommand.Parameters.AddWithValue("@branch", branchName);
+                    balanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+                    await balanceCommand.ExecuteNonQueryAsync();
                 }
             }
 
-            if (added > 0 || updated > 0)
+            if (skipped > 0 || updated > 0)
             {
-                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] ✓ Synced {updated} shared product price/metadata row(s) and added {added} product(s) to {branchName} with zero opening stock.");
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] ✓ Synced {updated} existing shared product row(s) for {branchName}; skipped {skipped} products not present in the branch POS.");
             }
 
             _sharedProductCatalogSince = syncStartedAt;
@@ -1191,6 +1150,7 @@ public sealed class BranchSyncDashboardForm : Form
     {
         var success = false;
         var error = string.Empty;
+        var isStockTake = false;
         try
         {
             var configuredBranch = _settings.BranchName?.Trim();
@@ -1202,7 +1162,7 @@ public sealed class BranchSyncDashboardForm : Form
             }
 
             branchName = configuredBranch;
-            var isStockTake = decimal.TryParse(transfer.target_quantity, NumberStyles.Number, CultureInfo.InvariantCulture, out var targetQuantity);
+            isStockTake = decimal.TryParse(transfer.target_quantity, NumberStyles.Number, CultureInfo.InvariantCulture, out var targetQuantity);
             if (!decimal.TryParse(transfer.quantity, NumberStyles.Number, CultureInfo.InvariantCulture, out var quantity) || quantity < 0 || (!isStockTake && quantity == 0) || (isStockTake && targetQuantity < 0))
             {
                 throw new InvalidOperationException($"Invalid transfer quantity: {transfer.quantity}");
@@ -1222,7 +1182,7 @@ public sealed class BranchSyncDashboardForm : Form
         catch (Exception ex)
         {
             error = ex.Message;
-            _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] ✗ STOCK TRANSFER FAILED: {error}");
+            _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] ✗ {(isStockTake ? "STOCK TAKE" : "STOCK TRANSFER")} FAILED: {error}");
         }
 
         var completion = new
@@ -1372,6 +1332,8 @@ public sealed class BranchSyncDashboardForm : Form
 
             if (isStockTake)
             {
+                _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Refreshing POS balance before reading product {transfer.product_id}.");
+                await RefreshProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
                 _syncQueueListBox.Items.Insert(0, $"[{DateTime.Now:HH:mm:ss}] [STOCK TAKE] Reading current POS balance for product {transfer.product_id}.");
             }
             var currentBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
@@ -1474,16 +1436,7 @@ public sealed class BranchSyncDashboardForm : Form
 
             if (isStockTake)
             {
-                using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
-                {
-                    CommandType = CommandType.StoredProcedure,
-                    CommandTimeout = BranchSqlCommandTimeoutSeconds
-                };
-                refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
-                refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
-                refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
-                refreshBalanceCommand.Parameters.AddWithValue("@productid", transfer.product_id);
-                await refreshBalanceCommand.ExecuteNonQueryAsync();
+                await RefreshProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
             }
 
             var actualBalance = await GetProductStockBalanceAsync(connection, transaction, transfer.product_id, branchName);
@@ -1562,6 +1515,24 @@ public sealed class BranchSyncDashboardForm : Form
                 ? 0m
                 : Convert.ToDecimal(balance, CultureInfo.InvariantCulture);
         }
+    }
+
+    private static async Task RefreshProductStockBalanceAsync(
+        SqlConnection connection,
+        SqlTransaction transaction,
+        int productId,
+        string branchName)
+    {
+        using var refreshBalanceCommand = new SqlCommand("SetQuickStockBalForOne", connection, transaction)
+        {
+            CommandType = CommandType.StoredProcedure,
+            CommandTimeout = BranchSqlCommandTimeoutSeconds
+        };
+        refreshBalanceCommand.Parameters.AddWithValue("@coid", BranchCompanyId);
+        refreshBalanceCommand.Parameters.AddWithValue("@branch", branchName);
+        refreshBalanceCommand.Parameters.AddWithValue("@iswarehouse", 0);
+        refreshBalanceCommand.Parameters.AddWithValue("@productid", productId);
+        await refreshBalanceCommand.ExecuteNonQueryAsync();
     }
 
     private static async Task<int> GetStockMovementInvoiceNumberAsync(

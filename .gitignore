@@ -23,3 +23,10 @@ config/db.sqlite3-wal
 config/loraApi/runtime_state.json
 *.log
 .env
+
+# WhatsApp local data and secrets
+WhatsAppApi/WhatsappAPI/stock.db
+WhatsAppApi/WhatsappAPI/django.db
+WhatsAppApi/WhatsappAPI/dashboard/config/db.sqlite3
+WhatsAppApi/WhatsappAPI/media/
+WhatsAppApi/WhatsappAPI/license_keys.sql
