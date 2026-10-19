@@ -167,7 +167,8 @@ class StockTransferTests(TestCase):
 	def test_whatsapp_stock_lookup_requires_token_and_filters_transfers_by_branch(self):
 		StockTransfer.objects.create(
 			transfer_id='WA_BRANCH_A', branch='BranchA', product_id=999,
-			product_name='Test Product', quantity=4, status='completed', completed_at=timezone.now(),
+			product_name='Test Product', quantity=4, status='completed',
+			completed_at=timezone.now() - timedelta(days=1),
 		)
 		StockTransfer.objects.create(
 			transfer_id='WA_BRANCH_B', branch='BranchB', product_id=999,
@@ -176,11 +177,16 @@ class StockTransferTests(TestCase):
 		StockTransfer.objects.create(
 			transfer_id='WA_YESTERDAY', branch='BranchA', product_id=999,
 			product_name='Yesterday Product', quantity=8, status='completed',
-			completed_at=timezone.now() - timedelta(days=1),
+			completed_at=timezone.now(),
 		)
+		StockTransfer.objects.filter(pk='WA_YESTERDAY').update(created_at=timezone.now() - timedelta(days=1))
 		StockTransfer.objects.create(
 			transfer_id='WA_PENDING', branch='BranchA', product_id=999,
 			product_name='Pending Product', quantity=9, status='pending',
+		)
+		StockTransfer.objects.create(
+			transfer_id='STOCKTAKE_TODAY', branch='BranchA', product_id=999,
+			product_name='Stock correction', quantity=3, status='completed',
 		)
 
 		unauthorized = self.client.get('/api/whatsapp/stock/?branch=BranchA')
@@ -191,9 +197,13 @@ class StockTransferTests(TestCase):
 			HTTP_X_WHATSAPP_TOKEN='test-whatsapp-token',
 		)
 		self.assertEqual(response.status_code, 200)
-		self.assertEqual([row['transfer_id'] for row in response.json()['transfers']], ['WA_BRANCH_A'])
+		self.assertCountEqual(
+			[row['transfer_id'] for row in response.json()['transfers']],
+			['WA_BRANCH_A', 'WA_PENDING'],
+		)
 		self.assertEqual(response.json()['date'], timezone.localdate().isoformat())
-		self.assertIn('received_at', response.json()['transfers'][0])
+		self.assertIn('sent_at', response.json()['transfers'][0])
+		self.assertNotIn('received_at', response.json()['transfers'][0])
 
 	@override_settings(STORAGES={
 		'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},

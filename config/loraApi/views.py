@@ -1250,10 +1250,9 @@ def whatsapp_stock_lookup(request):
     day_end = day_start + timedelta(days=1)
     transfers = StockTransfer.objects.filter(
         branch__iexact=branch,
-        status='completed',
-        completed_at__gte=day_start,
-        completed_at__lt=day_end,
-    ).order_by('completed_at', 'product_name')
+        created_at__gte=day_start,
+        created_at__lt=day_end,
+    ).exclude(transfer_id__startswith='STOCKTAKE_').order_by('created_at', 'product_name')
     return JsonResponse({
         'status': 'ok',
         'branch': branch,
@@ -1264,7 +1263,8 @@ def whatsapp_stock_lookup(request):
                 'product_id': transfer.product_id,
                 'product_name': transfer.product_name,
                 'quantity': str(transfer.quantity),
-                'received_at': transfer.completed_at.astimezone(stock_timezone).isoformat(),
+                'status': transfer.status,
+                'sent_at': transfer.created_at.astimezone(stock_timezone).isoformat(),
             }
             for transfer in transfers
         ],
