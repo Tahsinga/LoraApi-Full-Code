@@ -3,7 +3,7 @@ from .views import (
     branch_status, branch_sync, cancel_sale, health_check, main_sync,
     index, favicon, confirm_deletion, cancellation_history_api, request_sales_report, complete_sales_report, request_invoice_reprint, complete_invoice_reprint,
     adjust_main_stock, stocktake_branch_products, stocktake_branch_batch, create_stock_transfer, complete_stock_transfer, pending_stock_transfers, request_branch_price_update, update_product_tax_rate, complete_branch_price_update, create_branch_product, complete_branch_product_creation, delete_branch_product, complete_branch_product_deletion, product_catalog, deleted_products, product_catalog_sync_disabled,
-    product_sync_inbox, shared_product_catalog, publish_product_catalog, publish_branch_stock_snapshot, stock_summary, stock_movements, product_movement_history_api, stock_transfer_logs, movement_adjustment_history_api, stock_transfer_device_logs, stock_movement_device_logs, cancellation_device_logs, record_branch_sales, sales_report_schedules,
+    product_sync_inbox, shared_product_catalog, publish_product_catalog, publish_branch_stock_snapshot, stock_summary, stock_movements, product_movement_history_api, stock_transfer_logs, whatsapp_stock_lookup, movement_adjustment_history_api, stock_transfer_device_logs, stock_movement_device_logs, cancellation_device_logs, record_branch_sales, sales_report_schedules,
 )
 
 urlpatterns = [
@@ -37,6 +37,7 @@ urlpatterns = [
     path('stock/movements/', stock_movements, name='stock_movements'),
     path('stock/movements/history/', product_movement_history_api, name='product_movement_history_api'),
     path('stock/transfers/log/', stock_transfer_logs, name='stock_transfer_logs'),
+    path('whatsapp/stock/', whatsapp_stock_lookup, name='whatsapp_stock_lookup'),
     path('stock/movement-adjustments/history/', movement_adjustment_history_api, name='movement_adjustment_history_api'),
     path('stock/transfers/device-log/', stock_transfer_device_logs, name='stock_transfer_device_logs'),
     path('cancellations/device-log/', cancellation_device_logs, name='cancellation_device_logs'),

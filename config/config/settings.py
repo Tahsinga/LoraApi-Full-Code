@@ -27,6 +27,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-j#e+09ytj0=mmt_#(upoq
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+WHATSAPP_STOCK_API_TOKEN = os.environ.get('WHATSAPP_STOCK_API_TOKEN', '')
+WHATSAPP_STOCK_TIME_ZONE = os.environ.get('WHATSAPP_STOCK_TIME_ZONE', 'Africa/Harare')
 
 if DEBUG:
     ALLOWED_HOSTS = ['*']

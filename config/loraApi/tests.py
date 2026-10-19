@@ -163,6 +163,38 @@ class StockTransferTests(TestCase):
 			logout_response = client.post('/logout/', {'csrfmiddlewaretoken': csrf_token.group(1)})
 			self.assertRedirects(logout_response, '/login/', fetch_redirect_response=False)
 
+	@override_settings(WHATSAPP_STOCK_API_TOKEN='test-whatsapp-token', WHATSAPP_STOCK_TIME_ZONE='UTC')
+	def test_whatsapp_stock_lookup_requires_token_and_filters_transfers_by_branch(self):
+		StockTransfer.objects.create(
+			transfer_id='WA_BRANCH_A', branch='BranchA', product_id=999,
+			product_name='Test Product', quantity=4, status='completed', completed_at=timezone.now(),
+		)
+		StockTransfer.objects.create(
+			transfer_id='WA_BRANCH_B', branch='BranchB', product_id=999,
+			product_name='Other Product', quantity=2, status='pending',
+		)
+		StockTransfer.objects.create(
+			transfer_id='WA_YESTERDAY', branch='BranchA', product_id=999,
+			product_name='Yesterday Product', quantity=8, status='completed',
+			completed_at=timezone.now() - timedelta(days=1),
+		)
+		StockTransfer.objects.create(
+			transfer_id='WA_PENDING', branch='BranchA', product_id=999,
+			product_name='Pending Product', quantity=9, status='pending',
+		)
+
+		unauthorized = self.client.get('/api/whatsapp/stock/?branch=BranchA')
+		self.assertEqual(unauthorized.status_code, 403)
+
+		response = self.client.get(
+			'/api/whatsapp/stock/?branch=brancha',
+			HTTP_X_WHATSAPP_TOKEN='test-whatsapp-token',
+		)
+		self.assertEqual(response.status_code, 200)
+		self.assertEqual([row['transfer_id'] for row in response.json()['transfers']], ['WA_BRANCH_A'])
+		self.assertEqual(response.json()['date'], timezone.localdate().isoformat())
+		self.assertIn('received_at', response.json()['transfers'][0])
+
 	@override_settings(STORAGES={
 		'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
 		'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},

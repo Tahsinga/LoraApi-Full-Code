@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import time
 import uuid
@@ -9,6 +10,7 @@ from functools import wraps
 from threading import Lock
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.conf import settings
 from django.contrib.auth import get_user_model, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.forms import SetPasswordForm, UserCreationForm
@@ -1207,6 +1209,64 @@ def stock_transfer_logs(request):
                 'completed_at': transfer.completed_at.isoformat() if transfer.completed_at else None,
             }
             for transfer in transfer_rows
+        ],
+    })
+
+
+@csrf_exempt
+def whatsapp_stock_lookup(request):
+    if request.method != 'GET':
+        return JsonResponse({'status': 'error', 'message': 'Use GET method'}, status=405)
+
+    configured_token = settings.WHATSAPP_STOCK_API_TOKEN
+    supplied_token = request.headers.get('X-WhatsApp-Token', '')
+    if not configured_token or not hmac.compare_digest(supplied_token, configured_token):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403)
+
+    action = request.GET.get('action', 'transfers').strip().lower()
+    if action == 'branches':
+        catalog_branches = ProductCatalog.objects.filter(branch_confirmed=True).exclude(branch='')
+        transfer_branches = StockTransfer.objects.exclude(branch='')
+        branches = {
+            name for name in catalog_branches.values_list('branch', flat=True).distinct()
+            if name.casefold() != 'main'
+        }
+        branches.update(
+            name for name in transfer_branches.values_list('branch', flat=True).distinct()
+            if name.casefold() != 'main'
+        )
+        return JsonResponse({'status': 'ok', 'branches': sorted(branches, key=str.casefold)})
+
+    if action != 'transfers':
+        return JsonResponse({'status': 'error', 'message': 'Unknown action'}, status=400)
+
+    branch = request.GET.get('branch', '').strip()
+    if not branch:
+        return JsonResponse({'status': 'error', 'message': 'Branch is required'}, status=400)
+
+    stock_timezone = ZoneInfo(settings.WHATSAPP_STOCK_TIME_ZONE)
+    today = timezone.now().astimezone(stock_timezone).date()
+    day_start = datetime.combine(today, datetime.min.time(), tzinfo=stock_timezone)
+    day_end = day_start + timedelta(days=1)
+    transfers = StockTransfer.objects.filter(
+        branch__iexact=branch,
+        status='completed',
+        completed_at__gte=day_start,
+        completed_at__lt=day_end,
+    ).order_by('completed_at', 'product_name')
+    return JsonResponse({
+        'status': 'ok',
+        'branch': branch,
+        'date': today.isoformat(),
+        'transfers': [
+            {
+                'transfer_id': transfer.transfer_id,
+                'product_id': transfer.product_id,
+                'product_name': transfer.product_name,
+                'quantity': str(transfer.quantity),
+                'received_at': transfer.completed_at.astimezone(stock_timezone).isoformat(),
+            }
+            for transfer in transfers
         ],
     })
 
